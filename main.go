@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"github.com/AleksMa/StealLovingYou/delivery"
+	"github.com/AleksMa/StealLovingYou/models"
+	"github.com/AleksMa/StealLovingYou/repository"
+	useCase "github.com/AleksMa/StealLovingYou/usecase"
+
 	//"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/pgxpool"
 	_ "github.com/lib/pq"
 	"log"
@@ -15,7 +19,7 @@ import (
 var (
 	user string = "docker"
 	password string = "docker"
-	address string = "localhost"
+	address string = "localhost:5432"
 	name string = "docker"
 )
 
