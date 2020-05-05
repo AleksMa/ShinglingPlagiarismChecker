@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"github.com/AleksMa/StealLovingYou/models"
 	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"net/http"
 	"strconv"
 )
@@ -14,66 +16,48 @@ type Repo interface {
 	GetUserByID(id int64) (models.User, *models.Error)
 	GetUserByNickname(nickname string) (models.User, *models.Error)
 	ChangeUser(user *models.User) *models.Error
-	GetUsersByForum(forumID int64, params models.UserParams) (models.Users, *models.Error)
-
-	PutForum(forum *models.Forum) (uint64, *models.Error)
-	GetForumBySlug(slug string) (models.Forum, *models.Error)
-	GetForumByID(id int64) (models.Forum, *models.Error)
-
-	PutThread(thread *models.Thread) (uint64, *models.Error)
-	GetThreadBySlug(slug string) (models.Thread, *models.Error)
-	GetThreadByID(id int64) (models.Thread, *models.Error)
-	GetThreadsByForum(forumID int64, params models.ThreadParams) (models.Threads, *models.Error)
-	UpdateThreadWithID(thread *models.Thread) *models.Error
-	UpdateThreadWithSlug(thread *models.Thread) *models.Error
-
-	PutPost(post *models.Post) (uint64, *models.Error)
-	GetPost(ID int64) (models.Post, *models.Error)
-	ChangePost(post *models.Post) *models.Error
-	GetPostsByThreadID(threadID int64, params models.PostParams) (models.Posts, *models.Error)
-
-	UpdateVote(vote *models.Vote) (int, *models.Error)
-	PutVote(vote *models.Vote) (uint64, *models.Error)
 
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
 }
 
 type DBStore struct {
-	DB *pgx.ConnPool
+	DB  *pgxpool.Pool
+	ctx context.Context
 }
 
-func NewDBStore(db *pgx.ConnPool) Repo {
+func NewDBStore(pool *pgxpool.Pool, ctx context.Context) Repo {
 	return &DBStore{
-		db,
+		pool,
+		ctx,
 	}
 }
 
 func (store *DBStore) GetStatus() (models.Status, *models.Error) {
-	tx, _ := store.DB.Begin()
-	defer tx.Rollback()
+	tx, _ := store.DB.Begin(context.Background())
+	defer tx.Rollback(context.Background())
 
 	status := &models.Status{}
 
-	row := tx.QueryRow(`SELECT count(*) FROM forums`)
+	row := tx.QueryRow(store.ctx, `SELECT count(*) FROM forums`)
 	row.Scan(&status.Forum)
 
-	row = tx.QueryRow(`SELECT count(*) FROM posts`)
+	row = tx.QueryRow(store.ctx, `SELECT count(*) FROM posts`)
 	row.Scan(&status.Post)
 
-	row = tx.QueryRow(`SELECT count(*) FROM threads`)
+	row = tx.QueryRow(store.ctx, `SELECT count(*) FROM threads`)
 	row.Scan(&status.Thread)
 
-	row = tx.QueryRow(`SELECT count(*) FROM users`)
+	row = tx.QueryRow(store.ctx, `SELECT count(*) FROM users`)
 	row.Scan(&status.User)
 
-	tx.Commit()
+	tx.Commit(store.ctx)
 
 	return *status, nil
 }
 
 func (store *DBStore) ReloadDB() *models.Error {
-	_, err := store.DB.Exec(models.InitScript)
+	_, err := store.DB.Exec(store.ctx, models.InitScript)
 	if err != nil {
 		return models.NewError(http.StatusInternalServerError, err.Error())
 	}
@@ -85,7 +69,7 @@ func (store *DBStore) PutUser(user *models.User) (uint64, *models.Error) {
 	var ID uint64
 
 	insertQuery := `INSERT INTO users (nickname, about, email, fullname) VALUES ($1, $2, $3, $4) RETURNING id`
-	rows := store.DB.QueryRow(insertQuery,
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
 		user.Nickname, user.About, user.Email, user.Fullname)
 
 	err := rows.Scan(&ID)
@@ -102,7 +86,7 @@ func (store *DBStore) GetDupUsers(user *models.User) (models.Users, *models.Erro
 
 	selectStr := "SELECT DISTINCT nickname, about, email, fullname FROM users WHERE nickname=$1 OR email=$2"
 
-	rows, err := store.DB.Query(selectStr, user.Nickname, user.Email)
+	rows, err := store.DB.Query(store.ctx, selectStr, user.Nickname, user.Email)
 	if err != nil {
 		fmt.Println(err)
 		return users, models.NewError(http.StatusInternalServerError, err.Error())
@@ -130,7 +114,7 @@ func (store *DBStore) GetUserByNickname(nickname string) (models.User, *models.E
 	user := &models.User{}
 
 	selectStr := "SELECT id, nickname, about, email, fullname FROM users WHERE nickname = $1"
-	row := store.DB.QueryRow(selectStr, nickname)
+	row := store.DB.QueryRow(store.ctx, selectStr, nickname)
 
 	err := row.Scan(&user.ID, &user.Nickname, &user.About, &user.Email, &user.Fullname)
 
@@ -149,7 +133,7 @@ func (store *DBStore) GetUserByID(id int64) (models.User, *models.Error) {
 	user := &models.User{}
 
 	selectStr := "SELECT id, nickname, about, email, fullname FROM users WHERE id = $1"
-	row := store.DB.QueryRow(selectStr, id)
+	row := store.DB.QueryRow(store.ctx, selectStr, id)
 
 	err := row.Scan(&user.ID, &user.Nickname, &user.About, &user.Email, &user.Fullname)
 
@@ -167,7 +151,7 @@ func (store *DBStore) GetUserByID(id int64) (models.User, *models.Error) {
 func (store *DBStore) ChangeUser(user *models.User) *models.Error {
 
 	insertQuery := `UPDATE users SET about=$1, email=$2, fullname=$3 WHERE nickname=$4`
-	_, err := store.DB.Exec(insertQuery,
+	_, err := store.DB.Exec(store.ctx, insertQuery,
 		user.About, user.Email, user.Fullname, user.Nickname)
 
 	if err != nil {
@@ -218,7 +202,7 @@ SELECT authorid FROM threads WHERE forumID = $1)`
 	fmt.Println("SELET_STR: ", selectStr)
 	fmt.Println("CUR_PARAMS: ", curParams)
 
-	rows, err := store.DB.Query(selectStr, curParams...)
+	rows, err := store.DB.Query(store.ctx, selectStr, curParams...)
 	if err != nil {
 		fmt.Println(err)
 		return users, models.NewError(http.StatusInternalServerError, err.Error())

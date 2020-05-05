@@ -3,11 +3,11 @@ package delivery
 import (
 	"encoding/json"
 	"fmt"
-	useCase2 "github.com/AleksMa/StealLovingYou/useCase"
+	"github.com/AleksMa/StealLovingYou/models"
+	useCase2 "github.com/AleksMa/StealLovingYou/usecase"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 type Handlers struct {
@@ -121,34 +121,3 @@ func (handlers *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	WriteResponse(w, body, http.StatusOK)
 }
-
-func (handlers *Handlers) GetUsers(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slug := vars["slug"]
-
-	query := r.URL.Query()
-	var params models.UserParams
-	var err error
-
-	params.Limit, err = strconv.Atoi(query.Get("limit"))
-	if err != nil {
-		params.Limit = -1
-	}
-	params.Since = query.Get("since")
-	fmt.Println("SINCE: ", params.Since)
-	params.Desc = query.Get("desc") == "true"
-
-	users, e := handlers.usecases.GetUsersByForum(slug, params)
-	if e != nil {
-		body, _ := json.Marshal(e)
-		WriteResponse(w, body, e.Code)
-		return
-	}
-
-	fmt.Println(users)
-
-	body, _ := json.Marshal(users)
-
-	WriteResponse(w, body, http.StatusOK)
-}
-
