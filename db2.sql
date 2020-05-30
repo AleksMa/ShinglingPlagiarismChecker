@@ -61,13 +61,15 @@ CREATE TABLE IF NOT EXISTS status
 );
 
 CREATE VIEW checkResults
-AS SELECT u.userName, tasks.taskName, a.uploadDate, s.status, cr.plagiarismPercent, u2.userName as copiedFrom FROM users u
-                                                                                                                       JOIN attempts a on u.ID = a.userID
-                                                                                                                       JOIN tasks ON a.taskID = tasks.ID
-                                                                                                                       JOIN check_results cr on a.ID = cr.attemptID
-                                                                                                                       JOIN attempts a2 on cr.copiedFrom = a2.ID
-                                                                                                                       JOIN users u2 ON a2.userID = u2.ID
-                                                                                                                       JOIN status s on a.ID = s.attemptID;
+AS
+SELECT u.userName, tasks.taskName, a.uploadDate, s.status, cr.plagiarismPercent, u2.userName as copiedFrom
+FROM users u
+         JOIN attempts a on u.ID = a.userID
+         JOIN tasks ON a.taskID = tasks.ID
+         JOIN check_results cr on a.ID = cr.attemptID
+         JOIN attempts a2 on cr.copiedFrom = a2.ID
+         JOIN users u2 ON a2.userID = u2.ID
+         JOIN status s on a.ID = s.attemptID;
 
 
 
