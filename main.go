@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	user     string = "docker"
-	password string = "docker"
+	user     string = "stealuser"
+	password string = "steal"
 	address  string = "localhost:5432"
-	name     string = "docker"
+	name     string = "stealdb"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 
 	r.HandleFunc("/user/{nickname}/create", api.CreateUser).Methods("POST")
 	r.HandleFunc("/user/{nickname}/profile", api.GetUser).Methods("GET")
-	r.HandleFunc("/user/{nickname}/profile", api.UpdateUser).Methods("POST")
+	//r.HandleFunc("/user/{nickname}/profile", api.UpdateUser).Methods("POST")
 
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")

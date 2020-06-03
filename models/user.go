@@ -7,11 +7,10 @@ import (
 )
 
 type User struct {
-	ID       int64  `json:"-"`
-	About    string `json:"about"`
-	Email    string `json:"email"`
-	Fullname string `json:"fullname"`
-	Nickname string `json:"nickname"`
+	ID        int64  `json:"-"`
+	UserName  string `json:"username"`
+	FullName  string `json:"fullname"`
+	StudentID string `json:"studentid"`
 }
 
 type Users []*User
@@ -47,9 +46,8 @@ func init() {
 }
 
 func (u *User) Validate() *Error {
-	if !(nicknameRegexp.MatchString(u.Nickname) &&
-		emailRegexp.MatchString(u.Email) &&
-		u.Fullname != "") {
+	if !(nicknameRegexp.MatchString(u.UserName) &&
+		u.FullName != "") {
 		return NewError(http.StatusBadRequest, "validation failed")
 	}
 

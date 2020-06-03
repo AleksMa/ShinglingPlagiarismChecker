@@ -57,7 +57,7 @@ func (handlers *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	user.Nickname = nickname
+	user.UserName = nickname
 
 	users, e := handlers.usecases.PutUser(&user)
 	if e != nil {
@@ -93,31 +93,31 @@ func (handlers *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	WriteResponse(w, body, http.StatusOK)
 }
 
-func (handlers *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var userUpd models.UpdateUserFields
-	var e *models.Error
-
-	defer r.Body.Close()
-	body, _ := ioutil.ReadAll(r.Body)
-
-	fmt.Println(string(body))
-	vars := mux.Vars(r)
-	nickname := vars["nickname"]
-
-	err := json.Unmarshal(body, &userUpd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	user, e := handlers.usecases.ChangeUser(&userUpd, nickname)
-	if e != nil {
-		body, _ = json.Marshal(e)
-		WriteResponse(w, body, e.Code)
-		return
-	}
-
-	body, _ = json.Marshal(user)
-
-	WriteResponse(w, body, http.StatusOK)
-}
+//func (handlers *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
+//	var userUpd models.UpdateUserFields
+//	var e *models.Error
+//
+//	defer r.Body.Close()
+//	body, _ := ioutil.ReadAll(r.Body)
+//
+//	fmt.Println(string(body))
+//	vars := mux.Vars(r)
+//	nickname := vars["nickname"]
+//
+//	err := json.Unmarshal(body, &userUpd)
+//	if err != nil {
+//		http.Error(w, err.Error(), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	user, e := handlers.usecases.ChangeUser(&userUpd, nickname)
+//	if e != nil {
+//		body, _ = json.Marshal(e)
+//		WriteResponse(w, body, e.Code)
+//		return
+//	}
+//
+//	body, _ = json.Marshal(user)
+//
+//	WriteResponse(w, body, http.StatusOK)
+//}

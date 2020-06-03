@@ -9,7 +9,7 @@ import (
 type UseCase interface {
 	PutUser(user *models.User) (models.Users, *models.Error)
 	GetUserByNickname(nickname string) (models.User, *models.Error)
-	ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error)
+	//ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error)
 
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
@@ -41,7 +41,7 @@ func (u *useCase) PutUser(user *models.User) (models.Users, *models.Error) {
 		return nil, err
 	}
 
-	users, _ := u.repository.GetDupUsers(user)
+	users, _ := u.repository.GetUsers(user)
 	if users != nil && len(users) != 0 {
 		fmt.Println("DUP: ", users)
 		return users, nil
@@ -52,31 +52,31 @@ func (u *useCase) PutUser(user *models.User) (models.Users, *models.Error) {
 }
 
 func (u *useCase) GetUserByNickname(nickname string) (models.User, *models.Error) {
-	return u.repository.GetUserByNickname(nickname)
+	return u.repository.GetUserByUsername(nickname)
 }
 
-func (u *useCase) GetUserByID(id int64) (models.User, *models.Error) {
-	return u.repository.GetUserByID(id)
-}
+//func (u *useCase) GetUserByID(id int64) (models.User, *models.Error) {
+//	return u.repository.GetUserByID(id)
+//}
 
-func (u *useCase) ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error) {
-	tempUser, err := u.GetUserByNickname(nickname)
-	if err != nil {
-		return tempUser, err
-	}
-
-	if userUpd.Email != nil {
-		tempUser.Email = *userUpd.Email
-	}
-	if userUpd.Fullname != nil {
-		tempUser.Fullname = *userUpd.Fullname
-	}
-	if userUpd.About != nil {
-		tempUser.About = *userUpd.About
-	}
-
-	err = u.repository.ChangeUser(&tempUser)
-	fmt.Println(*userUpd)
-	fmt.Println(tempUser)
-	return tempUser, err
-}
+//func (u *useCase) ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error) {
+//	tempUser, err := u.GetUserByNickname(nickname)
+//	if err != nil {
+//		return tempUser, err
+//	}
+//
+//	if userUpd.Email != nil {
+//		tempUser.Email = *userUpd.Email
+//	}
+//	if userUpd.Fullname != nil {
+//		tempUser.Fullname = *userUpd.Fullname
+//	}
+//	if userUpd.About != nil {
+//		tempUser.About = *userUpd.About
+//	}
+//
+//	err = u.repository.ChangeUser(&tempUser)
+//	fmt.Println(*userUpd)
+//	fmt.Println(tempUser)
+//	return tempUser, err
+//}

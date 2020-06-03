@@ -1,8 +1,8 @@
-CREATE DATABASE docker;
-
-create user docker with encrypted password 'docker';
-
-grant all privileges on database docker to docker;
+-- CREATE DATABASE docker;
+--
+-- create user docker with encrypted password 'docker';
+--
+-- grant all privileges on database docker to docker;
 
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE IF NOT EXISTS users
@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS status
     FOREIGN KEY (attemptID) REFERENCES attempts (ID) ON DELETE CASCADE
 );
 
-CREATE VIEW checkResults
+DROP VIEW IF EXISTS results_view;
+CREATE VIEW results_view
 AS
 SELECT u.userName, tasks.taskName, a.uploadDate, s.status, cr.plagiarismPercent, u2.userName as copiedFrom
 FROM users u
