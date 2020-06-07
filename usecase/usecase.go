@@ -14,6 +14,8 @@ type UseCase interface {
 	PutTask(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
+	PutAttempt(attempt *models.Attempt) *models.Error
+
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
 }
@@ -35,7 +37,6 @@ func (u *useCase) GetStatus() (models.Status, error) {
 func (u *useCase) RemoveAllData() error {
 	return u.repository.ReloadDB()
 }
-
 
 func (u *useCase) PutUser(user *models.User) ([]*models.User, *models.Error) {
 	fmt.Println(user)
@@ -103,4 +104,10 @@ func (u *useCase) PutTask(task *models.Task) ([]*models.Task, *models.Error) {
 
 func (u *useCase) GetTaskByTaskname(taskname string) (models.Task, *models.Error) {
 	return u.repository.GetTaskByTaskname(taskname)
+}
+
+func (u *useCase) PutAttempt(attempt *models.Attempt) *models.Error {
+	fmt.Println(attempt)
+	_, err := u.repository.PutAttempt(attempt)
+	return err
 }

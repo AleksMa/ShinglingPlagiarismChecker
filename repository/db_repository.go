@@ -21,6 +21,8 @@ type Repo interface {
 	GetTasks(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
+	PutAttempt(attempt *models.Attempt) (uint64, *models.Error)
+
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
 }
@@ -196,4 +198,24 @@ func (store *DBStore) GetTaskByTaskname(taskname string) (models.Task, *models.E
 	}
 
 	return *task, nil
+}
+
+func (store *DBStore) PutAttempt(attempt *models.Attempt) (uint64, *models.Error) {
+	fmt.Println(attempt)
+	var ID uint64
+
+	insertQuery := `INSERT INTO attempts (userID, taskID, memory, time, sourceCode, uploadDate) VALUES 
+						((SELECT ID FROM users WHERE userName = $1),
+						(SELECT ID FROM tasks WHERE taskName = $2), 
+						$3, $4, $5, $6) RETURNING ID`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		attempt.User, attempt.Task, attempt.Memory, attempt.Time, attempt.SourceCode, attempt.UploadDate)
+
+	err := rows.Scan(&ID)
+	if err != nil {
+		fmt.Println(err)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ID, nil
 }

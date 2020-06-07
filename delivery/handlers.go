@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type Handlers struct {
@@ -168,4 +169,32 @@ func (handlers *Handlers) GetTask(w http.ResponseWriter, r *http.Request) {
 	body, _ := json.Marshal(task)
 
 	WriteResponse(w, body, http.StatusOK)
+}
+
+func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) {
+	var attempt models.Attempt
+
+	defer r.Body.Close()
+	body, _ := ioutil.ReadAll(r.Body)
+
+	fmt.Println(string(body))
+
+	err := json.Unmarshal(body, &attempt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	e := handlers.usecases.PutAttempt(&attempt)
+	if e != nil {
+		body, _ = json.Marshal(e)
+		WriteResponse(w, body, e.Code)
+		return
+	}
+
+	attempt.UploadDate = time.Now()
+
+	body, err = json.Marshal(attempt)
+
+	WriteResponse(w, body, http.StatusCreated)
 }
