@@ -7,9 +7,12 @@ import (
 )
 
 type UseCase interface {
-	PutUser(user *models.User) (models.Users, *models.Error)
-	GetUserByNickname(nickname string) (models.User, *models.Error)
+	PutUser(user *models.User) ([]*models.User, *models.Error)
+	GetUserByUsername(nickname string) (models.User, *models.Error)
 	//ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error)
+
+	PutTask(task *models.Task) (models.Tasks, *models.Error)
+	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
@@ -34,7 +37,7 @@ func (u *useCase) RemoveAllData() error {
 }
 
 
-func (u *useCase) PutUser(user *models.User) (models.Users, *models.Error) {
+func (u *useCase) PutUser(user *models.User) ([]*models.User, *models.Error) {
 	fmt.Println(user)
 
 	if err := user.Validate(); err != nil {
@@ -51,7 +54,7 @@ func (u *useCase) PutUser(user *models.User) (models.Users, *models.Error) {
 	return nil, err
 }
 
-func (u *useCase) GetUserByNickname(nickname string) (models.User, *models.Error) {
+func (u *useCase) GetUserByUsername(nickname string) (models.User, *models.Error) {
 	return u.repository.GetUserByUsername(nickname)
 }
 
@@ -60,7 +63,7 @@ func (u *useCase) GetUserByNickname(nickname string) (models.User, *models.Error
 //}
 
 //func (u *useCase) ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error) {
-//	tempUser, err := u.GetUserByNickname(nickname)
+//	tempUser, err := u.GetUserByUsername(nickname)
 //	if err != nil {
 //		return tempUser, err
 //	}
@@ -80,3 +83,24 @@ func (u *useCase) GetUserByNickname(nickname string) (models.User, *models.Error
 //	fmt.Println(tempUser)
 //	return tempUser, err
 //}
+
+func (u *useCase) PutTask(task *models.Task) (models.Tasks, *models.Error) {
+	fmt.Println(task)
+
+	if err := task.Validate(); err != nil {
+		return nil, err
+	}
+
+	tasks, _ := u.repository.GetTasks(task)
+	if tasks != nil && len(tasks) != 0 {
+		fmt.Println("DUP: ", tasks)
+		return tasks, nil
+	}
+
+	_, err := u.repository.PutTask(task)
+	return nil, err
+}
+
+func (u *useCase) GetTaskByTaskname(taskname string) (models.Task, *models.Error) {
+	return u.repository.GetTaskByTaskname(taskname)
+}

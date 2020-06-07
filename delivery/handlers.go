@@ -41,7 +41,6 @@ func (handlers *Handlers) Clear(w http.ResponseWriter, r *http.Request) {
 	handlers.usecases.RemoveAllData()
 }
 
-
 func (handlers *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
@@ -50,14 +49,14 @@ func (handlers *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(string(body))
 	vars := mux.Vars(r)
-	nickname := vars["nickname"]
+	username := vars["username"]
 
 	err := json.Unmarshal(body, &user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	user.UserName = nickname
+	user.UserName = username
 
 	users, e := handlers.usecases.PutUser(&user)
 	if e != nil {
@@ -79,9 +78,9 @@ func (handlers *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (handlers *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nickname := vars["nickname"]
+	username := vars["username"]
 
-	user, err := handlers.usecases.GetUserByNickname(nickname)
+	user, err := handlers.usecases.GetUserByUsername(username)
 	if err != nil {
 		body, _ := json.Marshal(err)
 		WriteResponse(w, body, err.Code)
@@ -121,3 +120,52 @@ func (handlers *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 //
 //	WriteResponse(w, body, http.StatusOK)
 //}
+
+func (handlers *Handlers) CreateTask(w http.ResponseWriter, r *http.Request) {
+	var task models.Task
+
+	defer r.Body.Close()
+	body, _ := ioutil.ReadAll(r.Body)
+
+	fmt.Println(string(body))
+	vars := mux.Vars(r)
+	taskname := vars["taskname"]
+
+	err := json.Unmarshal(body, &task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	task.TaskName = taskname
+
+	tasks, e := handlers.usecases.PutTask(&task)
+	if e != nil {
+		body, _ = json.Marshal(e)
+		WriteResponse(w, body, e.Code)
+		return
+	}
+	if tasks != nil {
+		body, _ = json.Marshal(tasks)
+		WriteResponse(w, body, http.StatusConflict)
+		return
+	}
+	body, err = json.Marshal(task)
+
+	WriteResponse(w, body, http.StatusCreated)
+}
+
+func (handlers *Handlers) GetTask(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskname := vars["taskname"]
+
+	task, err := handlers.usecases.GetTaskByTaskname(taskname)
+	if err != nil {
+		body, _ := json.Marshal(err)
+		WriteResponse(w, body, err.Code)
+		return
+	}
+
+	body, _ := json.Marshal(task)
+
+	WriteResponse(w, body, http.StatusOK)
+}

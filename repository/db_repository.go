@@ -17,6 +17,10 @@ type Repo interface {
 	GetUserByUsername(nickname string) (models.User, *models.Error)
 	//ChangeUser(user *models.User) *models.Error
 
+	PutTask(task *models.Task) (uint64, *models.Error)
+	GetTasks(task *models.Task) (models.Tasks, *models.Error)
+	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
+
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
 }
@@ -128,38 +132,68 @@ func (store *DBStore) GetUserByUsername(nickname string) (models.User, *models.E
 
 	return *user, nil
 }
-//
-//func (store *DBStore) GetUserByID(id int64) (models.User, *models.Error) {
-//	user := &models.User{}
-//
-//	selectStr := "SELECT id, nickname, about, email, fullname FROM users WHERE id = $1"
-//	row := store.DB.QueryRow(store.ctx, selectStr, id)
-//
-//	err := row.Scan(&user.ID, &user.Nickname, &user.About, &user.Email, &user.Fullname)
-//
-//	if err != nil {
-//		fmt.Println(err)
-//		if err == pgx.ErrNoRows {
-//			return *user, models.NewError(http.StatusNotFound, err.Error())
-//		}
-//		return *user, models.NewError(http.StatusInternalServerError, err.Error())
-//	}
-//
-//	return *user, nil
-//}
-//
-//func (store *DBStore) ChangeUser(user *models.User) *models.Error {
-//
-//	insertQuery := `UPDATE users SET about=$1, email=$2, fullname=$3 WHERE nickname=$4`
-//	_, err := store.DB.Exec(store.ctx, insertQuery,
-//		user.About, user.Email, user.Fullname, user.Nickname)
-//
-//	if err != nil {
-//		if pgerr, ok := err.(pgx.PgError); ok && pgerr.Code == "23505" {
-//			return models.NewError(http.StatusConflict, err.Error())
-//		}
-//		return models.NewError(http.StatusInternalServerError, err.Error())
-//	}
-//
-//	return nil
-//}
+
+func (store *DBStore) PutTask(task *models.Task) (uint64, *models.Error) {
+	fmt.Println(task)
+	var ID uint64
+
+	insertQuery := `INSERT INTO tasks (taskName, fullName, maxTime, maxMemory) VALUES ($1, $2, $3, $4) RETURNING ID`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		task.TaskName, task.FullName, task.MaxTime, task.MaxMemory)
+
+	err := rows.Scan(&ID)
+	if err != nil {
+		fmt.Println(err)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ID, nil
+}
+
+func (store *DBStore) GetTasks(task *models.Task) (models.Tasks, *models.Error) {
+	tasks := models.Tasks{}
+
+	selectStr := "SELECT DISTINCT taskName, fullName, maxTime, maxMemory FROM tasks WHERE taskName=$1"
+
+	rows, err := store.DB.Query(store.ctx, selectStr, task.TaskName)
+	if err != nil {
+		fmt.Println(err)
+		return tasks, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		task := &models.Task{}
+		err := rows.Scan(&task.TaskName, &task.FullName, &task.MaxTime, &task.MaxMemory)
+		if err != nil {
+			return tasks, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		tasks = append(tasks, task)
+	}
+
+	rows.Close()
+
+	if err != nil {
+		return tasks, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return tasks, nil
+}
+
+func (store *DBStore) GetTaskByTaskname(taskname string) (models.Task, *models.Error) {
+	task := &models.Task{}
+
+	selectStr := "SELECT id, userName, fullName, studentID FROM users WHERE username = $1"
+	row := store.DB.QueryRow(store.ctx, selectStr, taskname)
+
+	err := row.Scan(&task.ID, &task.TaskName, &task.FullName, &task.MaxTime, &task.MaxMemory)
+
+	if err != nil {
+		fmt.Println(err)
+		if err == pgx.ErrNoRows {
+			return *task, models.NewError(http.StatusNotFound, err.Error())
+		}
+		return *task, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return *task, nil
+}

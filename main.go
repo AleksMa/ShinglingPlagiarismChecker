@@ -26,13 +26,6 @@ func main() {
 
 	ctx := context.Background()
 
-	//t, _ := time.Parse(time.RFC3339Nano, "2017-01-01 00:00:00 +0000 UTC")
-	//fmt.Println(t)
-
-	//layout := "2006-01-02 00:00:00 +0000 UTC"
-
-	//dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", "localhost", "docker", "docker", "docker")
-
 	dbinfo := fmt.Sprintf("postgresql://%s:%s@%s/%s?pool_max_conns=3", user, password, address, name)
 
 	config, _ := pgxpool.ParseConfig(dbinfo)
@@ -61,9 +54,12 @@ func main() {
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 
-	r.HandleFunc("/user/{nickname}/create", api.CreateUser).Methods("POST")
-	r.HandleFunc("/user/{nickname}/profile", api.GetUser).Methods("GET")
+	r.HandleFunc("/user/{username}/create", api.CreateUser).Methods("POST")
+	r.HandleFunc("/user/{username}/profile", api.GetUser).Methods("GET")
 	//r.HandleFunc("/user/{nickname}/profile", api.UpdateUser).Methods("POST")
+
+	r.HandleFunc("/task/{taskname}/create", api.CreateTask).Methods("POST")
+	r.HandleFunc("/task/{taskname}/task", api.GetTask).Methods("GET")
 
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")
