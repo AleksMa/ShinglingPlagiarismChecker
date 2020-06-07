@@ -185,6 +185,8 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	attempt.UploadDate = time.Now()
+
 	e := handlers.usecases.PutAttempt(&attempt)
 	if e != nil {
 		body, _ = json.Marshal(e)
@@ -192,9 +194,15 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	attempt.UploadDate = time.Now()
-
 	body, err = json.Marshal(attempt)
 
 	WriteResponse(w, body, http.StatusCreated)
+}
+
+func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {
+	user := r.FormValue("user")
+	task := r.FormValue("task")
+	fmt.Println(user)
+	fmt.Println(task)
+	http.Error(w, "err.Error()", http.StatusInternalServerError)
 }

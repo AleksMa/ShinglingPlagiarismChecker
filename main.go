@@ -62,6 +62,7 @@ func main() {
 	r.HandleFunc("/task/{taskname}/task", api.GetTask).Methods("GET")
 
 	r.HandleFunc("/attempt", api.CreateAttempt).Methods("POST")
+	r.HandleFunc("/attempt", api.GetAttempt).Methods("GET")
 
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")

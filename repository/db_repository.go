@@ -211,11 +211,17 @@ func (store *DBStore) PutAttempt(attempt *models.Attempt) (uint64, *models.Error
 	rows := store.DB.QueryRow(store.ctx, insertQuery,
 		attempt.User, attempt.Task, attempt.Memory, attempt.Time, attempt.SourceCode, attempt.UploadDate)
 
+	fmt.Println(attempt.UploadDate)
+
 	err := rows.Scan(&ID)
 	if err != nil {
 		fmt.Println(err)
 		return 0, models.NewError(http.StatusInternalServerError, err.Error())
 	}
+
+	insertQuery = `INSERT INTO status (attemptID, status) VALUES
+						($1, $2)`
+	store.DB.QueryRow(store.ctx, insertQuery, ID, 1)
 
 	return ID, nil
 }
