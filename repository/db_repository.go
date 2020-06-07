@@ -12,13 +12,13 @@ import (
 
 type Repo interface {
 	PutUser(user *models.User) (uint64, *models.Error)
-	GetUsers(user *models.User) (models.Users, *models.Error)
+	GetUsers(user *models.User) ([]*models.User, *models.Error)
 	//GetUserByID(id int64) (models.User, *models.Error)
 	GetUserByUsername(nickname string) (models.User, *models.Error)
 	//ChangeUser(user *models.User) *models.Error
 
 	PutTask(task *models.Task) (uint64, *models.Error)
-	GetTasks(task *models.Task) (models.Tasks, *models.Error)
+	GetTasks(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
 	GetStatus() (models.Status, *models.Error)
@@ -85,8 +85,8 @@ func (store *DBStore) PutUser(user *models.User) (uint64, *models.Error) {
 	return ID, nil
 }
 
-func (store *DBStore) GetUsers(user *models.User) (models.Users, *models.Error) {
-	users := models.Users{}
+func (store *DBStore) GetUsers(user *models.User) ([]*models.User, *models.Error) {
+	users := []*models.User{}
 
 	selectStr := "SELECT DISTINCT userName, fullName, studentID FROM users WHERE userName=$1 OR studentID=$2"
 
@@ -150,8 +150,8 @@ func (store *DBStore) PutTask(task *models.Task) (uint64, *models.Error) {
 	return ID, nil
 }
 
-func (store *DBStore) GetTasks(task *models.Task) (models.Tasks, *models.Error) {
-	tasks := models.Tasks{}
+func (store *DBStore) GetTasks(task *models.Task) ([]*models.Task, *models.Error) {
+	tasks := []*models.Task{}
 
 	selectStr := "SELECT DISTINCT taskName, fullName, maxTime, maxMemory FROM tasks WHERE taskName=$1"
 
@@ -182,7 +182,7 @@ func (store *DBStore) GetTasks(task *models.Task) (models.Tasks, *models.Error) 
 func (store *DBStore) GetTaskByTaskname(taskname string) (models.Task, *models.Error) {
 	task := &models.Task{}
 
-	selectStr := "SELECT id, userName, fullName, studentID FROM users WHERE username = $1"
+	selectStr := "SELECT id, taskName, fullName, maxTime, maxMemory FROM tasks WHERE taskname = $1"
 	row := store.DB.QueryRow(store.ctx, selectStr, taskname)
 
 	err := row.Scan(&task.ID, &task.TaskName, &task.FullName, &task.MaxTime, &task.MaxMemory)

@@ -11,7 +11,7 @@ type UseCase interface {
 	GetUserByUsername(nickname string) (models.User, *models.Error)
 	//ChangeUser(userUpd *models.UpdateUserFields, nickname string) (models.User, *models.Error)
 
-	PutTask(task *models.Task) (models.Tasks, *models.Error)
+	PutTask(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
 	GetStatus() (models.Status, error)
@@ -84,7 +84,7 @@ func (u *useCase) GetUserByUsername(nickname string) (models.User, *models.Error
 //	return tempUser, err
 //}
 
-func (u *useCase) PutTask(task *models.Task) (models.Tasks, *models.Error) {
+func (u *useCase) PutTask(task *models.Task) ([]*models.Task, *models.Error) {
 	fmt.Println(task)
 
 	if err := task.Validate(); err != nil {

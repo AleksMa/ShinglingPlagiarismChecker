@@ -13,8 +13,6 @@ type User struct {
 	StudentID string `json:"studentid"`
 }
 
-type Users []*User
-
 type UserParams struct {
 	Limit int
 	Since string

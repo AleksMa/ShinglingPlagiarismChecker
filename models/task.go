@@ -12,8 +12,6 @@ type Task struct {
 	MaxMemory int64  `json:"maxmemory"`
 }
 
-type Tasks []*Task
-
 func (t *Task) Validate() *Error {
 	if !nameRegexp.MatchString(t.TaskName) || t.FullName == "" {
 		return NewError(http.StatusBadRequest, "validation failed")
