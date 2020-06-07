@@ -54,12 +54,12 @@ func main() {
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 
-	r.HandleFunc("/user/{username}/create", api.CreateUser).Methods("POST")
-	r.HandleFunc("/user/{username}/profile", api.GetUser).Methods("GET")
+	r.HandleFunc("/user/{username}", api.CreateUser).Methods("POST")
+	r.HandleFunc("/user/{username}", api.GetUser).Methods("GET")
 	//r.HandleFunc("/user/{nickname}/profile", api.UpdateUser).Methods("POST")
 
-	r.HandleFunc("/task/{taskname}/create", api.CreateTask).Methods("POST")
-	r.HandleFunc("/task/{taskname}/task", api.GetTask).Methods("GET")
+	r.HandleFunc("/task/{taskname}", api.CreateTask).Methods("POST")
+	r.HandleFunc("/task/{taskname}", api.GetTask).Methods("GET")
 
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")
