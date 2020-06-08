@@ -21,8 +21,11 @@ type Repo interface {
 	GetTasks(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
+	PutAttempt(attempt *models.Attempt) (uint64, *models.Error)
+
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
+	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
 }
 
 type DBStore struct {
@@ -196,4 +199,77 @@ func (store *DBStore) GetTaskByTaskname(taskname string) (models.Task, *models.E
 	}
 
 	return *task, nil
+}
+
+func (store *DBStore) PutAttempt(attempt *models.Attempt) (uint64, *models.Error) {
+	fmt.Println(attempt)
+	var ID uint64
+
+	insertQuery := `INSERT INTO attempts (userID, taskID, memory, time, sourceCode, uploadDate) VALUES 
+						((SELECT ID FROM users WHERE userName = $1),
+						(SELECT ID FROM tasks WHERE taskName = $2), 
+						$3, $4, $5, $6) RETURNING ID`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		attempt.User, attempt.Task, attempt.Memory, attempt.Time, attempt.SourceCode, attempt.UploadDate)
+
+	fmt.Println(attempt.UploadDate)
+
+	err := rows.Scan(&ID)
+	if err != nil {
+		fmt.Println(err)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	insertQuery = `INSERT INTO status (attemptID, status) VALUES
+						($1, $2)`
+	store.DB.QueryRow(store.ctx, insertQuery, ID, 1)
+
+	return ID, nil
+}
+
+func (store *DBStore) GetAttempt(task string, user string) ([]*models.Attempt, *models.Error) {
+	var attempts []*models.Attempt
+	var args []interface{}
+
+	selectStr := `SELECT u.userName, t.taskName, a.time, a.memory, a.uploaddate, a.sourcecode
+					FROM users u
+         			JOIN attempts a on u.ID = a.userID
+         			JOIN t ON a.taskID = t.ID`
+
+	if task != "" {
+		selectStr += " WHERE t.taskname=$1"
+		args = append(args, task)
+	}
+
+	if user != "" {
+		if task != "" {
+			selectStr += " AND u.username=$2"
+		} else {
+			selectStr += " WHERE u.username=$1"
+		}
+		args = append(args, user)
+	}
+	selectStr += ";"
+
+	fmt.Println(selectStr)
+
+	rows, err := store.DB.Query(store.ctx, selectStr, args...)
+	if err != nil {
+		fmt.Println(err)
+		return attempts, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		attempt := &models.Attempt{}
+		err := rows.Scan(&attempt.User, &attempt.Task, &attempt.Time,
+			&attempt.Memory, &attempt.UploadDate, &attempt.SourceCode)
+		if err != nil {
+			return attempts, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		attempts = append(attempts, attempt)
+	}
+
+	rows.Close()
+
+	return attempts, nil
 }

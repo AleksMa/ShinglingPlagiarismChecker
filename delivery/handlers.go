@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type Handlers struct {
@@ -166,6 +167,50 @@ func (handlers *Handlers) GetTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, _ := json.Marshal(task)
+
+	WriteResponse(w, body, http.StatusOK)
+}
+
+func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) {
+	var attempt models.Attempt
+
+	defer r.Body.Close()
+	body, _ := ioutil.ReadAll(r.Body)
+
+	fmt.Println(string(body))
+
+	err := json.Unmarshal(body, &attempt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	attempt.UploadDate = time.Now()
+
+	e := handlers.usecases.PutAttempt(&attempt)
+	if e != nil {
+		body, _ = json.Marshal(e)
+		WriteResponse(w, body, e.Code)
+		return
+	}
+
+	body, err = json.Marshal(attempt)
+
+	WriteResponse(w, body, http.StatusCreated)
+}
+
+func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {
+	user := r.FormValue("user")
+	task := r.FormValue("task")
+
+	attempts, err := handlers.usecases.GetAttempt(task, user)
+	if err != nil {
+		body, _ := json.Marshal(err)
+		WriteResponse(w, body, err.Code)
+		return
+	}
+
+	body, _ := json.Marshal(attempts)
 
 	WriteResponse(w, body, http.StatusOK)
 }
