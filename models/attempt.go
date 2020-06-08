@@ -13,3 +13,11 @@ type Attempt struct {
 	SourceCode string    `json:"sourceCode"`
 	UploadDate time.Time `json:"uploadDate"`
 }
+
+type AttemptSimplification struct {
+	ID         int64     `json:"-"`
+	User       string    `json:"user"`
+	Task       string    `json:"task"`
+	SourceCode string    `json:"sourceCode"`
+	UploadDate time.Time `json:"uploadDate"`
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/AleksMa/StealLovingYou/models"
 	"github.com/AleksMa/StealLovingYou/repository"
+	"sort"
 )
 
 type UseCase interface {
@@ -19,6 +20,7 @@ type UseCase interface {
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
 	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
+	GetResult(task string, user string) ([]*models.Result, *models.Error)
 }
 
 type useCase struct {
@@ -116,3 +118,51 @@ func (u *useCase) PutAttempt(attempt *models.Attempt) *models.Error {
 func (u *useCase) GetAttempt(task string, user string) ([]*models.Attempt, *models.Error) {
 	return u.repository.GetAttempt(task, user)
 }
+
+func isResultsEqual(res1, res2 *models.Result) bool {
+	return res1.ID == res2.ID
+}
+
+func (u *useCase) GetResult(task string, user string) ([]*models.Result, *models.Error) {
+	results, err := u.repository.GetResult(task, user)
+	if err != nil {
+		return results, err
+	}
+
+	if len(results) == 0 {
+		return results, nil
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].ID < results[j].ID
+	})
+
+	j := 0
+	for i := 1; i < len(results); i++ {
+		if isResultsEqual(results[j], results[i]) {
+			results[j].CopiedFrom = append(results[j].CopiedFrom, results[i].CopiedFrom...)
+			continue
+		}
+		j++
+		results[j] = results[i]
+	}
+
+	return results[:j+1], nil
+}
+
+
+//func isResultsEqual(res1, res2 *models.Result) bool {
+//	return res1.User == res2.User &&
+//		res1.Task == res2.Task &&
+//		res1.UploadDate == res2.UploadDate
+//}
+
+//sort.Slice(results, func(i, j int) bool {
+//	if results[i].User != results[j].User {
+//		return results[i].User < results[j].User
+//	}
+//	if results[i].Task != results[j].Task {
+//		return results[i].Task < results[j].Task
+//	}
+//	return results[i].UploadDate.Unix() < results[j].UploadDate.Unix()
+//})

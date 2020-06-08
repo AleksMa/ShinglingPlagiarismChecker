@@ -26,6 +26,7 @@ type Repo interface {
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
 	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
+	GetResult(task string, user string) ([]*models.Result, *models.Error)
 }
 
 type DBStore struct {
@@ -270,4 +271,50 @@ func (store *DBStore) GetAttempt(task string, user string) ([]*models.Attempt, *
 	rows.Close()
 
 	return attempts, nil
+}
+
+func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *models.Error) {
+	var results []*models.Result
+	var args []interface{}
+
+	selectStr := `SELECT id, userName, taskName, uploadDate, status, percent, 
+						 copiedFrom, copiedTask, copiedDate, sourceCode, copiedCode
+					FROM results`
+
+	if task != "" {
+		selectStr += " WHERE taskname=$1"
+		args = append(args, task)
+	}
+
+	if user != "" {
+		if task != "" {
+			selectStr += " AND username=$2"
+		} else {
+			selectStr += " WHERE username=$1"
+		}
+		args = append(args, user)
+	}
+	selectStr += ";"
+
+	rows, err := store.DB.Query(store.ctx, selectStr, args...)
+	if err != nil {
+		fmt.Println(err)
+		return results, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		result := &models.Result{}
+		copied := &models.AttemptSimplification{}
+		err := rows.Scan(&result.ID, &result.User, &result.Task, &result.UploadDate, &result.Status, &result.PlagiarismPercent,
+			&copied.User, &copied.Task, &copied.UploadDate, &result.SourceCode, &copied.SourceCode)
+		if err != nil {
+			return results, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		result.CopiedFrom = append(result.CopiedFrom, copied)
+		results = append(results, result)
+	}
+
+	rows.Close()
+
+	return results, nil
 }

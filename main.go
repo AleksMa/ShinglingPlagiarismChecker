@@ -64,6 +64,8 @@ func main() {
 	r.HandleFunc("/attempt", api.CreateAttempt).Methods("POST")
 	r.HandleFunc("/attempt", api.GetAttempt).Methods("GET")
 
+	r.HandleFunc("/result", api.GetResult).Methods("GET")
+
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")
 

@@ -214,3 +214,19 @@ func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {
 
 	WriteResponse(w, body, http.StatusOK)
 }
+
+func (handlers *Handlers) GetResult(w http.ResponseWriter, r *http.Request) {
+	user := r.FormValue("user")
+	task := r.FormValue("task")
+
+	attempts, err := handlers.usecases.GetResult(task, user)
+	if err != nil {
+		body, _ := json.Marshal(err)
+		WriteResponse(w, body, err.Code)
+		return
+	}
+
+	body, _ := json.Marshal(attempts)
+
+	WriteResponse(w, body, http.StatusOK)
+}

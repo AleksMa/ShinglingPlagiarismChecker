@@ -41,15 +41,15 @@ CREATE TABLE IF NOT EXISTS attempts
     FOREIGN KEY (taskID) REFERENCES tasks (ID) ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS check_results CASCADE;
-CREATE TABLE IF NOT EXISTS check_results
+DROP TABLE IF EXISTS borrowings CASCADE;
+CREATE TABLE IF NOT EXISTS borrowings
 (
     attemptID         BIGINT NOT NULL,
     copiedFrom        BIGINT NOT NULL,
     plagiarismPercent INT,
 
     FOREIGN KEY (attemptID) REFERENCES attempts (ID) ON DELETE CASCADE,
-    FOREIGN KEY (copiedFrom) REFERENCES users (ID) ON DELETE CASCADE
+    FOREIGN KEY (copiedFrom) REFERENCES attempts (ID) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS status CASCADE;
@@ -61,14 +61,24 @@ CREATE TABLE IF NOT EXISTS status
     FOREIGN KEY (attemptID) REFERENCES attempts (ID) ON DELETE CASCADE
 );
 
-DROP VIEW IF EXISTS results_view;
-CREATE VIEW results_view
+DROP VIEW IF EXISTS results;
+CREATE VIEW results
 AS
-SELECT u.userName, t.taskName, a.uploadDate, s.status, cr.plagiarismPercent, u2.userName as copiedFrom
+SELECT u.userName          as userName,
+       t.taskName          as taskName,
+       a.uploadDate        as uploadDate,
+       s.status            as status,
+       b.plagiarismPercent as percent,
+       u2.userName         as copiedFrom,
+       t2.taskName         as copiedTask,
+       a2.uploadDate       as copiedDate,
+       a.sourcecode        as sourceCode,
+       a2.sourceCode       as copiedCode
 FROM users u
          JOIN attempts a on u.ID = a.userID
          JOIN tasks t ON a.taskID = t.ID
-         LEFT JOIN check_results cr on a.ID = cr.attemptID
-         LEFT JOIN attempts a2 on cr.copiedFrom = a2.ID
-         LEFT JOIN users u2 ON a2.userID = u2.ID
-         LEFT JOIN status s on a.ID = s.attemptID;
+         JOIN borrowings b on a.ID = b.attemptID
+         JOIN attempts a2 on b.copiedFrom = a2.ID
+         JOIN users u2 ON a2.userID = u2.ID
+         JOIN tasks t2 ON a2.taskID = t2.ID
+         JOIN status s on a.ID = s.attemptID;
