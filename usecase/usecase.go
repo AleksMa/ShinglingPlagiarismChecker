@@ -18,6 +18,7 @@ type UseCase interface {
 
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
+	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
 }
 
 type useCase struct {
@@ -110,4 +111,8 @@ func (u *useCase) PutAttempt(attempt *models.Attempt) *models.Error {
 	fmt.Println(attempt)
 	_, err := u.repository.PutAttempt(attempt)
 	return err
+}
+
+func (u *useCase) GetAttempt(task string, user string) ([]*models.Attempt, *models.Error) {
+	return u.repository.GetAttempt(task, user)
 }

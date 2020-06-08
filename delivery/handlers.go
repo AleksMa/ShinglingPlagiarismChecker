@@ -202,7 +202,15 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {
 	user := r.FormValue("user")
 	task := r.FormValue("task")
-	fmt.Println(user)
-	fmt.Println(task)
-	http.Error(w, "err.Error()", http.StatusInternalServerError)
+
+	attempts, err := handlers.usecases.GetAttempt(task, user)
+	if err != nil {
+		body, _ := json.Marshal(err)
+		WriteResponse(w, body, err.Code)
+		return
+	}
+
+	body, _ := json.Marshal(attempts)
+
+	WriteResponse(w, body, http.StatusOK)
 }
