@@ -234,7 +234,7 @@ func (store *DBStore) GetAttempt(task string, user string) ([]*models.Attempt, *
 	selectStr := `SELECT u.userName, t.taskName, a.time, a.memory, a.uploaddate, a.sourcecode
 					FROM users u
          			JOIN attempts a on u.ID = a.userID
-         			JOIN t ON a.taskID = t.ID`
+         			JOIN tasks t ON a.taskID = t.ID`
 
 	if task != "" {
 		selectStr += " WHERE t.taskname=$1"
@@ -250,8 +250,6 @@ func (store *DBStore) GetAttempt(task string, user string) ([]*models.Attempt, *
 		args = append(args, user)
 	}
 	selectStr += ";"
-
-	fmt.Println(selectStr)
 
 	rows, err := store.DB.Query(store.ctx, selectStr, args...)
 	if err != nil {
