@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"fmt"
+	"github.com/AleksMa/StealLovingYou/checking"
+	"github.com/AleksMa/StealLovingYou/lex_utils"
 	"github.com/AleksMa/StealLovingYou/models"
 	"github.com/AleksMa/StealLovingYou/repository"
 	"sort"
@@ -19,8 +21,11 @@ type UseCase interface {
 
 	GetStatus() (models.Status, error)
 	RemoveAllData() error
+
 	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
 	GetResult(task string, user string) ([]*models.Result, *models.Error)
+
+	PutHashes(attempt *models.Attempt) (*models.HashSet, *models.Error)
 }
 
 type useCase struct {
@@ -110,8 +115,11 @@ func (u *useCase) GetTaskByTaskname(taskname string) (models.Task, *models.Error
 }
 
 func (u *useCase) PutAttempt(attempt *models.Attempt) *models.Error {
-	fmt.Println(attempt)
-	_, err := u.repository.PutAttempt(attempt)
+	ID, err := u.repository.PutAttempt(attempt)
+	attempt.ID = ID
+
+	u.PlagiarismCheck(attempt)
+
 	return err
 }
 
@@ -150,6 +158,66 @@ func (u *useCase) GetResult(task string, user string) ([]*models.Result, *models
 	return results[:j+1], nil
 }
 
+func (u *useCase) PutHashes(attempt *models.Attempt) (*models.HashSet, *models.Error) {
+	hashSet := lex_utils.FullAnalize(attempt.SourceCode)
+	//time.Sleep(2 * time.Minute)
+	err := u.repository.PutHashes(attempt.ID, hashSet)
+	return &hashSet, err
+}
+
+func (u *useCase) GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error) {
+	return u.repository.GetSimilarHashes(attempt)
+}
+
+func (u *useCase) PlagiarismCheck(attempt *models.Attempt) {
+	var (
+		copied []*models.Borrowing
+	)
+
+	hashSet, e := u.PutHashes(attempt)
+	if e != nil {
+		fmt.Println(e)
+		return
+	}
+
+	if len(*hashSet) == 0 {
+		fmt.Println("Too small program")
+		return
+	}
+
+	similarHashes, e := u.GetSimilarHashes(attempt)
+	if e != nil {
+		fmt.Println(e)
+		return
+	}
+
+	fmt.Println("GOT SIMILAR")
+
+	curObject := &models.HashObject{
+		ID:  attempt.ID,
+		Set: hashSet,
+	}
+
+	for _, hashObject := range similarHashes {
+		fmt.Println("Сравниваем: ", len(*(hashObject.Set)))
+		res := checking.CheckObjects(curObject, hashObject)
+		if res > models.BorrowingThreshold {
+			copied = append(copied, &models.Borrowing{
+				AttemptID:  curObject.ID,
+				CopiedFrom: hashObject.ID,
+				Percent:    res,
+			})
+		}
+	}
+
+	for _, borrowing := range copied {
+		e = u.repository.PutBorrowing(borrowing)
+		if e != nil {
+			fmt.Println(e)
+			return
+		}
+	}
+}
 
 //func isResultsEqual(res1, res2 *models.Result) bool {
 //	return res1.User == res2.User &&

@@ -22,11 +22,18 @@ type Repo interface {
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
 
 	PutAttempt(attempt *models.Attempt) (uint64, *models.Error)
+	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
 
 	GetStatus() (models.Status, *models.Error)
 	ReloadDB() *models.Error
-	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
+
 	GetResult(task string, user string) ([]*models.Result, *models.Error)
+
+	PutHashes(ID uint64, hashSet models.HashSet) *models.Error
+	GetHashes(ID uint64) (*models.HashSet, *models.Error)
+	GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error)
+
+	PutBorrowing(borrowing *models.Borrowing) *models.Error
 }
 
 type DBStore struct {
@@ -317,4 +324,112 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 	rows.Close()
 
 	return results, nil
+}
+
+func (store *DBStore) PutHashes(ID uint64, hashSet models.HashSet) *models.Error {
+	var gID uint64
+
+	for hash := range hashSet {
+		insertQuery := `INSERT INTO hashes (attemptID, Hash) VALUES ($1, $2) RETURNING attemptID`
+		rows := store.DB.QueryRow(store.ctx, insertQuery,
+			ID, hash)
+
+		err := rows.Scan(&gID)
+		if err != nil || ID != gID {
+			fmt.Println(err)
+			return models.NewError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	updateQuery := `UPDATE status SET status=$1 WHERE attemptID=$2`
+	_, err := store.DB.Exec(store.ctx, updateQuery,
+		3, ID)
+
+	if err != nil {
+		return models.NewError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
+}
+
+func (store *DBStore) GetHashes(ID uint64) (*models.HashSet, *models.Error) {
+	fmt.Println("Haчали")
+
+	result := make(models.HashSet)
+
+	selectStr := `SELECT hash FROM hashes
+						WHERE attemptID=$1;`
+
+	rows, err := store.DB.Query(store.ctx, selectStr, ID)
+	defer rows.Close()
+	if err != nil {
+		return &result, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		var hash models.Hash
+
+		err := rows.Scan(&hash)
+		if err != nil {
+			return &result, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		result[hash] = struct{}{}
+	}
+
+	fmt.Println("Кончили")
+
+	return &result, nil
+}
+
+func (store *DBStore) GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error) {
+	var results []*models.HashObject
+
+	selectStr := `SELECT a.ID FROM attempts a
+						JOIN tasks t on a.taskID = t.ID
+						WHERE t.taskName=$1;`
+
+	rows, err := store.DB.Query(store.ctx, selectStr, attempt.Task)
+	defer rows.Close()
+	if err != nil {
+		fmt.Println(err)
+		return results, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		var attemptID uint64
+		err := rows.Scan(&attemptID)
+		if err != nil {
+			return results, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		if attemptID == attempt.ID {
+			continue
+		}
+		hs, e := store.GetHashes(attemptID)
+		if e != nil {
+			return results, models.NewError(http.StatusInternalServerError, e.Error())
+		}
+		result := &models.HashObject{
+			ID:  attemptID,
+			Set: hs,
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+func (store *DBStore) PutBorrowing(borrowing *models.Borrowing) *models.Error {
+	fmt.Println(borrowing)
+	var ID uint64
+
+	insertQuery := `INSERT INTO borrowings (attemptID, copiedFrom, plagiarismPercent) VALUES ($1, $2, $3) RETURNING attemptID`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		borrowing.AttemptID, borrowing.CopiedFrom, borrowing.Percent)
+
+	err := rows.Scan(&ID)
+	if err != nil || ID != borrowing.AttemptID {
+		fmt.Println(err)
+		return models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }

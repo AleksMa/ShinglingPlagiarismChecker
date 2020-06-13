@@ -5,7 +5,7 @@ import (
 )
 
 type Attempt struct {
-	ID         int64     `json:"-"`
+	ID         uint64     `json:"-"`
 	User       string    `json:"user"`
 	Task       string    `json:"task"`
 	Time       int64     `json:"time"`
@@ -15,7 +15,7 @@ type Attempt struct {
 }
 
 type AttemptSimplification struct {
-	ID         int64     `json:"-"`
+	ID         uint64     `json:"-"`
 	User       string    `json:"user"`
 	Task       string    `json:"task"`
 	SourceCode string    `json:"sourceCode"`

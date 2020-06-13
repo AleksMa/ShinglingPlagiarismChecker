@@ -1,7 +1,7 @@
 package lex_utils
 
 import (
-	"fmt"
+	"github.com/AleksMa/StealLovingYou/models"
 	"math"
 	"strconv"
 	"strings"
@@ -148,7 +148,6 @@ func Lex(source string) []int {
 				i++
 			}
 			substr := source[j:i]
-			fmt.Println(substr)
 			if _, ok := keywords_map[substr]; ok {
 				tokens = append(tokens, KEYWORD)
 			} else {
@@ -164,8 +163,8 @@ func Lex(source string) []int {
 	return tokens
 }
 
-func Split(tokens []int) []int64 {
-	var shingles []int64
+func Split(tokens []int) models.HashSet {
+	shingles := make(models.HashSet)
 
 	var s_shingles []string
 	for i := 0; i < len(tokens) -shingle_size; i++ {
@@ -178,13 +177,16 @@ func Split(tokens []int) []int64 {
 	}
 
 	for _, s_shingle := range s_shingles {
-		var shingle int64 = 0
+		var shingle models.Hash = 0
 		for j := shingle_size - 1; j >= 0; j-- {
-			shingle += int64(s_shingle[j]) * int64(math.Pow(types_count, float64(shingle_size-j-1)))
+			shingle += models.Hash(s_shingle[j]) * models.Hash(math.Pow(types_count, float64(shingle_size-j-1)))
 		}
-		shingles = append(shingles, shingle)
-		fmt.Println(shingle, s_shingle)
+		shingles[shingle] = struct{}{}
 	}
 
 	return shingles
+}
+
+func FullAnalize(source string) models.HashSet {
+	return Split(Lex(Normalize(source)))
 }

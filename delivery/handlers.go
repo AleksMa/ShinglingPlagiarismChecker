@@ -197,6 +197,7 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 	body, err = json.Marshal(attempt)
 
 	WriteResponse(w, body, http.StatusCreated)
+	fmt.Println("CREATED")
 }
 
 func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {

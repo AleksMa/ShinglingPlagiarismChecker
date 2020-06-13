@@ -26,7 +26,7 @@ func main() {
 
 	ctx := context.Background()
 
-	dbinfo := fmt.Sprintf("postgresql://%s:%s@%s/%s?pool_max_conns=3", user, password, address, name)
+	dbinfo := fmt.Sprintf("postgresql://%s:%s@%s/%s", user, password, address, name)
 
 	config, _ := pgxpool.ParseConfig(dbinfo)
 
