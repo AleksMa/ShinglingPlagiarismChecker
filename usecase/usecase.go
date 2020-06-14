@@ -47,7 +47,6 @@ func (u *useCase) RemoveAllData() error {
 }
 
 func (u *useCase) PutUser(user *models.User) ([]*models.User, *models.Error) {
-	fmt.Println(user)
 
 	if err := user.Validate(); err != nil {
 		return nil, err
@@ -191,15 +190,12 @@ func (u *useCase) PlagiarismCheck(attempt *models.Attempt) {
 		return
 	}
 
-	fmt.Println("GOT SIMILAR")
-
 	curObject := &models.HashObject{
 		ID:  attempt.ID,
 		Set: hashSet,
 	}
 
 	for _, hashObject := range similarHashes {
-		fmt.Println("Сравниваем: ", len(*(hashObject.Set)))
 		res := checking.CheckObjects(curObject, hashObject)
 		if res > models.BorrowingThreshold {
 			copied = append(copied, &models.Borrowing{

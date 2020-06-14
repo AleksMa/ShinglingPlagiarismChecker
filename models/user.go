@@ -13,18 +13,6 @@ type User struct {
 	StudentID string `json:"studentid"`
 }
 
-type UserParams struct {
-	Limit int
-	Since string
-	Desc  bool
-}
-
-type UpdateUserFields struct {
-	About    *string `json:"about"`
-	Email    *string `json:"email"`
-	Fullname *string `json:"fullname"`
-}
-
 var (
 	nameRegexp *regexp.Regexp
 )

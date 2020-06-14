@@ -7,15 +7,12 @@ import (
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"net/http"
-	//"strconv"
 )
 
 type Repo interface {
 	PutUser(user *models.User) (uint64, *models.Error)
 	GetUsers(user *models.User) ([]*models.User, *models.Error)
-	//GetUserByID(id int64) (models.User, *models.Error)
 	GetUserByUsername(nickname string) (models.User, *models.Error)
-	//ChangeUser(user *models.User) *models.Error
 
 	PutTask(task *models.Task) (uint64, *models.Error)
 	GetTasks(task *models.Task) ([]*models.Task, *models.Error)
@@ -80,19 +77,25 @@ func (store *DBStore) ReloadDB() *models.Error {
 }
 
 func (store *DBStore) PutUser(user *models.User) (uint64, *models.Error) {
-	fmt.Println(user)
 	var ID uint64
 
-	insertQuery := `INSERT INTO users (userName, fullName, studentID) VALUES ($1, $2, $3) RETURNING id`
-	rows := store.DB.QueryRow(store.ctx, insertQuery,
-		user.UserName, user.FullName, user.StudentID)
-
-	err := rows.Scan(&ID)
+	tx, err := store.DB.Begin(store.ctx)
 	if err != nil {
-		fmt.Println(err)
 		return 0, models.NewError(http.StatusInternalServerError, err.Error())
 	}
 
+
+	insertQuery := `INSERT INTO users (userName, fullName, studentID) VALUES ($1, $2, $3) RETURNING id`
+	rows := tx.QueryRow(store.ctx, insertQuery,
+		user.UserName, user.FullName, user.StudentID)
+
+	err = rows.Scan(&ID)
+	if err != nil {
+		tx.Rollback(store.ctx)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	tx.Commit(store.ctx)
 	return ID, nil
 }
 
@@ -329,6 +332,8 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 func (store *DBStore) PutHashes(ID uint64, hashSet models.HashSet) *models.Error {
 	var gID uint64
 
+
+
 	for hash := range hashSet {
 		insertQuery := `INSERT INTO hashes (attemptID, Hash) VALUES ($1, $2) RETURNING attemptID`
 		rows := store.DB.QueryRow(store.ctx, insertQuery,
@@ -433,3 +438,11 @@ func (store *DBStore) PutBorrowing(borrowing *models.Borrowing) *models.Error {
 
 	return nil
 }
+
+//func ( store * DBStore ) GetUsers ( user * models . User ) {
+//func ( store * DBStore ) PutUsers ( user *
+//	 ( store * DBStore ) PutUsers ( user * models
+//	   store * DBStore ) PutUsers ( user * models .
+//			 * DBStore ) PutUsers ( user * models . User
+//func ( store * DBStore ) PutUsers ( user * models . User )
+//func ( store * DBStore ) PutUsers ( user * models . User ) {
