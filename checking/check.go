@@ -1,7 +1,6 @@
 package checking
 
 import (
-	"fmt"
 	"github.com/AleksMa/StealLovingYou/models"
 )
 
@@ -15,7 +14,7 @@ func Check(first, second models.HashSet) int8 {
 			equalCount++
 		}
 	}
-	fmt.Println("EQUAL COUNT: ", equalCount)
+	//fmt.Println("EQUAL COUNT: ", equalCount)
 	return int8(equalCount * 100 / (len(first) + len(second) - equalCount))
 }
 

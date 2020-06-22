@@ -1,6 +1,7 @@
 package lex_utils
 
 import (
+	"fmt"
 	"github.com/AleksMa/StealLovingYou/models"
 	"math"
 	"strconv"
@@ -9,18 +10,21 @@ import (
 )
 
 const (
-	shingle_size = 20
-	types_count = 4
+	shingle_size = 15
+	types_count = Separator + 1
 )
 
 const (
-	KEYWORD = iota
-	OPERATOR
-	IDENTIFIER
-	CONSTANT
-	VARIABLE_TYPE
-	CYCLE
-	CONDITION
+	Identifier = iota
+	Keyword
+	Constant
+	StringLiteral
+	Operator
+	Separator
+)
+
+var (
+	names map[int]string
 )
 
 var (
@@ -68,6 +72,15 @@ func init() {
 	for _, kw := range keywords {
 		keywords_map[kw] = struct{}{}
 	}
+
+	names = make(map[int]string)
+	names[Identifier] = "Identifier"
+	names[Keyword] = "Keyword"
+	names[Constant] = "Constant"
+	names[StringLiteral] = "StringLiteral"
+	names[Operator] = "Operator"
+	names[Separator] = "Separator"
+
 }
 
 func Normalize(source string) string {
@@ -121,7 +134,7 @@ func Normalize(source string) string {
 }
 
 func Lex(source string) []int {
-	var tokens []int
+	tokens := []int{}
 	for i := 0; i < len(source); i++ {
 		r := rune(source[i])
 		if r == '"' {
@@ -129,19 +142,19 @@ func Lex(source string) []int {
 			for i < len(source) && source[i] != '"' {
 				i++
 			}
-			tokens = append(tokens, CONSTANT)
+			tokens = append(tokens, StringLiteral)
 		} else if r == '\'' {
 			i++
 			for i < len(source) && source[i] != '\'' {
 				i++
 			}
-			tokens = append(tokens, CONSTANT)
+			tokens = append(tokens, Constant)
 		} else if unicode.IsDigit(r) {
 			for i < len(source) && unicode.IsDigit(rune(source[i])) {
 				i++
 			}
 			i--
-			tokens = append(tokens, CONSTANT)
+			tokens = append(tokens, Constant)
 		} else if unicode.IsLetter(r) {
 			j := i
 			for i < len(source) && (unicode.IsDigit(rune(source[i])) || unicode.IsLetter(rune(source[i]))) {
@@ -149,44 +162,74 @@ func Lex(source string) []int {
 			}
 			substr := source[j:i]
 			if _, ok := keywords_map[substr]; ok {
-				tokens = append(tokens, KEYWORD)
+				tokens = append(tokens, Keyword)
 			} else {
-				tokens = append(tokens, IDENTIFIER)
+				tokens = append(tokens, Identifier)
 			}
 			i--
+		} else if r == ';' || r == ',' || r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' {
+			tokens = append(tokens, Separator)
 		} else {
 			if !unicode.IsSpace(r) {
-				tokens = append(tokens, OPERATOR)
+				tokens = append(tokens, Operator)
 			}
 		}
 	}
 	return tokens
 }
 
+func Canonize(source string) []int {
+	return Lex(Normalize(source))
+}
+
 func Split(tokens []int) models.HashSet {
 	shingles := make(models.HashSet)
 
+
+	fmt.Print("[")
+	for i, t := range tokens {
+		fmt.Print(t)
+		if i != len(tokens) - 1 {
+			fmt.Print(", ")
+		}
+	}
+	fmt.Print("]")
+
 	var s_shingles []string
+	var i_shingles [][]int
 	for i := 0; i < len(tokens) -shingle_size; i++ {
 		num_shingle := tokens[i:i+shingle_size]
+		i_shingles = append(i_shingles, num_shingle)
+		//fmt.Println(num_shingle)
+		fmt.Print("[")
+		for i, t := range num_shingle {
+			fmt.Print(t)
+			if i != len(num_shingle) - 1 {
+				fmt.Print(", ")
+			}
+		}
+		fmt.Println("]")
 		shingle := ""
 		for _, r := range num_shingle {
 			shingle += strconv.Itoa(r)
 		}
 		s_shingles = append(s_shingles, shingle)
+		//fmt.Println(shingle)
 	}
 
-	for _, s_shingle := range s_shingles {
+	for _, i_shingle := range i_shingles {
 		var shingle models.Hash = 0
 		for j := shingle_size - 1; j >= 0; j-- {
-			shingle += models.Hash(s_shingle[j]) * models.Hash(math.Pow(types_count, float64(shingle_size-j-1)))
+			shingle += models.Hash(i_shingle[j]) * models.Hash(math.Pow(types_count, float64(shingle_size-j-1)))
 		}
 		shingles[shingle] = struct{}{}
+		fmt.Println(shingle)
+		//fmt.Println(models.Hash(math.Pow(types_count, float64(shingle_size-1))))
 	}
 
 	return shingles
 }
 
-func FullAnalize(source string) models.HashSet {
-	return Split(Lex(Normalize(source)))
+func FullAnalise(source string) models.HashSet {
+	return Split(Canonize(source))
 }

@@ -22,11 +22,25 @@ var (
 	name     string = "stealdb"
 )
 
+
+
+var (
+	Timing int64
+	Count int64
+)
+
 func main() {
+
+	defer func() {
+		fmt.Println("COUNT:", Count)
+		if Count != 0 {
+			fmt.Println("TIMING:", Timing / Count)
+		}
+	}()
 
 	ctx := context.Background()
 
-	dbinfo := fmt.Sprintf("postgresql://%s:%s@%s/%s", user, password, address, name)
+	dbinfo := fmt.Sprintf("postgresql://%s:%s@%s/%s?pool_max_conns=200000", user, password, address, name)
 
 	config, _ := pgxpool.ParseConfig(dbinfo)
 
@@ -43,7 +57,7 @@ func main() {
 
 	// db, err := sql.Open("postgres", dbinfo)
 	repo := repository.NewDBStore(db, ctx)
-	usecases := usecase.NewUseCase(repo)
+	usecases := usecase.NewUseCase(repo, &Timing, &Count)
 	api := delivery.NewHandlers(usecases)
 
 	// _, err = db.Exec(models.InitScript)
@@ -70,6 +84,7 @@ func main() {
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")
 
 	log.Println("http server started on 5000 port: ")
+
 	err = http.ListenAndServe(":5000", r)
 	if err != nil {
 		log.Println(err)

@@ -177,8 +177,6 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 	defer r.Body.Close()
 	body, _ := ioutil.ReadAll(r.Body)
 
-	fmt.Println(string(body))
-
 	err := json.Unmarshal(body, &attempt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -187,7 +185,10 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 
 	attempt.UploadDate = time.Now()
 
+	t := time.Now()
 	e := handlers.usecases.PutAttempt(&attempt)
+	fmt.Println(time.Now().Sub(t))
+
 	if e != nil {
 		body, _ = json.Marshal(e)
 		WriteResponse(w, body, e.Code)
@@ -197,7 +198,6 @@ func (handlers *Handlers) CreateAttempt(w http.ResponseWriter, r *http.Request) 
 	body, err = json.Marshal(attempt)
 
 	WriteResponse(w, body, http.StatusCreated)
-	fmt.Println("CREATED")
 }
 
 func (handlers *Handlers) GetAttempt(w http.ResponseWriter, r *http.Request) {

@@ -19,7 +19,7 @@ var (
 
 func init() {
 	var err error
-	nameRegexp, err = regexp.Compile(`^[a-zA-Z0-9_.]+$`)
+	nameRegexp, err = regexp.Compile(`^[a-zA-Zа-яА-Я0-9_.]+$`)
 	if err != nil {
 		log.Fatalf("nickname regexp err: %s", err.Error())
 	}

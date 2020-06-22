@@ -304,7 +304,7 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 		}
 		args = append(args, user)
 	}
-	selectStr += ";"
+	selectStr += "AND percent > 2;"
 
 	rows, err := store.DB.Query(store.ctx, selectStr, args...)
 	if err != nil {
@@ -315,7 +315,7 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 	for rows.Next() {
 		result := &models.Result{}
 		copied := &models.AttemptSimplification{}
-		err := rows.Scan(&result.ID, &result.User, &result.Task, &result.UploadDate, &result.Status, &result.PlagiarismPercent,
+		err := rows.Scan(&result.ID, &result.User, &result.Task, &result.UploadDate, &result.Status, &copied.PlagiarismPercent,
 			&copied.User, &copied.Task, &copied.UploadDate, &result.SourceCode, &copied.SourceCode)
 		if err != nil {
 			return results, models.NewError(http.StatusInternalServerError, err.Error())
@@ -357,7 +357,6 @@ func (store *DBStore) PutHashes(ID uint64, hashSet models.HashSet) *models.Error
 }
 
 func (store *DBStore) GetHashes(ID uint64) (*models.HashSet, *models.Error) {
-	fmt.Println("Haчали")
 
 	result := make(models.HashSet)
 
@@ -380,7 +379,6 @@ func (store *DBStore) GetHashes(ID uint64) (*models.HashSet, *models.Error) {
 		result[hash] = struct{}{}
 	}
 
-	fmt.Println("Кончили")
 
 	return &result, nil
 }
@@ -423,7 +421,7 @@ func (store *DBStore) GetSimilarHashes(attempt *models.Attempt) ([]*models.HashO
 }
 
 func (store *DBStore) PutBorrowing(borrowing *models.Borrowing) *models.Error {
-	fmt.Println(borrowing)
+	//fmt.Println(borrowing)
 	var ID uint64
 
 	insertQuery := `INSERT INTO borrowings (attemptID, copiedFrom, plagiarismPercent) VALUES ($1, $2, $3) RETURNING attemptID`
@@ -439,7 +437,7 @@ func (store *DBStore) PutBorrowing(borrowing *models.Borrowing) *models.Error {
 	return nil
 }
 
-//func ( store * DBStore ) GetUsers ( user * models . User ) {
+//func ( store * DBStore ) PutUsers ( user * models . User ) {
 //func ( store * DBStore ) PutUsers ( user *
 //	 ( store * DBStore ) PutUsers ( user * models
 //	   store * DBStore ) PutUsers ( user * models .

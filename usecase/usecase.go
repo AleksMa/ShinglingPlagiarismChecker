@@ -7,6 +7,7 @@ import (
 	"github.com/AleksMa/StealLovingYou/models"
 	"github.com/AleksMa/StealLovingYou/repository"
 	"sort"
+	"time"
 )
 
 type UseCase interface {
@@ -30,11 +31,15 @@ type UseCase interface {
 
 type useCase struct {
 	repository repository.Repo
+	timing     *int64
+	count      *int64
 }
 
-func NewUseCase(repo repository.Repo) UseCase {
+func NewUseCase(repo repository.Repo, t, c *int64) UseCase {
 	return &useCase{
 		repository: repo,
+		timing:     t,
+		count:      c,
 	}
 }
 
@@ -116,9 +121,18 @@ func (u *useCase) GetTaskByTaskname(taskname string) (models.Task, *models.Error
 func (u *useCase) PutAttempt(attempt *models.Attempt) *models.Error {
 	ID, err := u.repository.PutAttempt(attempt)
 	attempt.ID = ID
-
-	u.PlagiarismCheck(attempt)
-
+	if err == nil {
+		go func() {
+			t := time.Now()
+			u.PlagiarismCheck(attempt)
+			fmt.Println("Checking: ", time.Now().Sub(t))
+			*(u.timing) += (time.Now().Sub(t)).Nanoseconds()
+			*(u.count)++
+			fmt.Println("TIMING:", *(u.timing) / *(u.count))
+			fmt.Println("COUNT:", *(u.count))
+			fmt.Println()
+		}()
+	}
 	return err
 }
 
@@ -158,7 +172,10 @@ func (u *useCase) GetResult(task string, user string) ([]*models.Result, *models
 }
 
 func (u *useCase) PutHashes(attempt *models.Attempt) (*models.HashSet, *models.Error) {
-	hashSet := lex_utils.FullAnalize(attempt.SourceCode)
+	t := time.Now()
+	hashSet := lex_utils.FullAnalise(attempt.SourceCode)
+	fmt.Println("Storing: ", time.Now().Sub(t))
+	fmt.Println()
 	//time.Sleep(2 * time.Minute)
 	err := u.repository.PutHashes(attempt.ID, hashSet)
 	return &hashSet, err
@@ -197,7 +214,7 @@ func (u *useCase) PlagiarismCheck(attempt *models.Attempt) {
 
 	for _, hashObject := range similarHashes {
 		res := checking.CheckObjects(curObject, hashObject)
-		if res > models.BorrowingThreshold {
+		if res >= models.BorrowingThreshold {
 			copied = append(copied, &models.Borrowing{
 				AttemptID:  curObject.ID,
 				CopiedFrom: hashObject.ID,
