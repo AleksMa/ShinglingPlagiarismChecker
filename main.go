@@ -66,7 +66,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	r := mux.NewRouter()
 
 	r.HandleFunc("/user/{username}", api.CreateUser).Methods("POST")
 	r.HandleFunc("/user/{username}", api.GetUser).Methods("GET")
@@ -82,6 +82,10 @@ func main() {
 
 	r.HandleFunc("/service/status", api.GetStatus).Methods("GET")
 	r.HandleFunc("/service/clear", api.Clear).Methods("POST")
+
+	r.HandleFunc("/admin/swagger", api.HandleSwagger).Methods("GET")
+	r.HandleFunc("/admin/swagger/{filename:.*}", api.LoadSwagger).Methods("GET")
+	r.HandleFunc("/admin/{filename:.*}", api.LoadSwagger).Methods("GET")
 
 	log.Println("http server started on 5000 port: ")
 

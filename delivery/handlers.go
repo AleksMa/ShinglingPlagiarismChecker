@@ -1,13 +1,17 @@
 package delivery
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/AleksMa/StealLovingYou/models"
+	"github.com/AleksMa/StealLovingYou/swagger"
 	useCase2 "github.com/AleksMa/StealLovingYou/usecase"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -230,4 +234,38 @@ func (handlers *Handlers) GetResult(w http.ResponseWriter, r *http.Request) {
 	body, _ := json.Marshal(attempts)
 
 	WriteResponse(w, body, http.StatusOK)
+}
+
+func (handlers *Handlers) HandleSwagger(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadFile(filepath.Join("/Users/a.mamaev/go/src/StealLovingYou/swagger/static", "index.html"))
+	if err != nil {
+		fmt.Println(err)
+		WriteResponse(w, body, http.StatusInternalServerError)
+	}
+	body = bytes.Replace(body, []byte("%EXTERNAL_NAME%"), append([]byte("http://"), []byte(r.Host)...), -1)
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (handlers *Handlers) LoadSwagger(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["filename"]
+	fmt.Println(filename)
+
+	path := "/Users/a.mamaev/go/src/StealLovingYou/swagger/static"
+	if swagger.CheckHandlerSchemaPath([]byte(filename)) {
+		path = "/Users/a.mamaev/go/src/StealLovingYou/swagger"
+	}
+
+	body, err := ioutil.ReadFile(filepath.Join(path, filename))
+	if err != nil {
+		fmt.Println(err)
+		WriteResponse(w, body, http.StatusInternalServerError)
+	}
+	if strings.HasSuffix(filename, ".css") {
+		w.Header().Set("Content-Type", "text/css")
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
