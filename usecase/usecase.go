@@ -177,12 +177,12 @@ func (u *useCase) PutHashes(attempt *models.Attempt) (*models.HashSet, *models.E
 	fmt.Println("Storing: ", time.Now().Sub(t))
 	fmt.Println()
 	//time.Sleep(2 * time.Minute)
-	err := u.repository.PutHashes(attempt.ID, hashSet)
+	err := u.repository.PutHashes2(attempt.ID, hashSet)
 	return &hashSet, err
 }
 
 func (u *useCase) GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error) {
-	return u.repository.GetSimilarHashes(attempt)
+	return u.repository.GetSimilarHashes2(attempt)
 }
 
 func (u *useCase) PlagiarismCheck(attempt *models.Attempt) {

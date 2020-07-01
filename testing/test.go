@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/AleksMa/StealLovingYou/lex_utils"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -12,11 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AleksMa/StealLovingYou/lex_utils"
 	_ "github.com/AleksMa/StealLovingYou/lex_utils"
 )
 
 func SendUser(name string) {
-	url := "http://localhost:5000/api/user/" + name
+	url := "http://localhost:5000/user/" + name
 	fmt.Println("URL:>", url)
 
 	stid := rand.Int()
@@ -42,7 +42,7 @@ func SendUser(name string) {
 }
 
 func SendAttempt(code string, name string, task string) int {
-	url := "http://localhost:5000/api/attempt"
+	url := "http://localhost:5000/attempt"
 	fmt.Println("URL:>", url)
 
 	var jsonStr = []byte(`{
@@ -79,7 +79,7 @@ func main() {
 	dir := "./testing/files/polinom"
 	items, _ := ioutil.ReadDir(dir)
 	for _, item := range items {
-		if i > 50 {
+		if i < 150 || i > 200 {
 			i++
 			continue
 		}
@@ -90,7 +90,7 @@ func main() {
 		name = temp[len(temp) - 2] + "_" + temp[len(temp) - 3]
 		fmt.Println(name)
 		now := time.Now()
-		//SendUser(name)
+		// SendUser(name)
 		fmt.Println(time.Now().Sub(now))
 		totalTimeUser += (time.Now().Sub(now)).Nanoseconds()
 

@@ -1,562 +1,524 @@
 openapi: '3.0.0'
 info:
-  title: Profiled
+  title: Source code plagiarism checker
   version: '1.0'
-externalDocs:
-  description: Daemon documentation
-  url: https://confluence.mail.ru/display/RB/profiled.md
 
 components:
-  headers:
-    x-bannerd-timeout:
-      in: header
-      name: x-bannerd-timeout
-      schema:
-        type: integer
-      default: 100
-      description: request timeout
   schemas:
-    BannerdUserSettingsDebug:
-      type: object
+    UserResponse:
+      description: The root schema comprises the entire JSON document.
+      default: {}
       properties:
-        last_ts:
-          type: integer
-          format: int64
-        debug:
+        username:
+          $id: "#/properties/username"
           type: string
-        bannerd_loc:
+          title: The username schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example: Алексей_Мамаев
+        fullname:
+          $id: "#/properties/fullname"
           type: string
-        req:
+          title: The fullname schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Алексей_Мамаев
+        studentid:
+          $id: "#/properties/studentid"
           type: string
-        expiration_ts:
-          type: integer
-          format: int64
-    BannerdUserSettingsEye:
-      type: object
+          title: The studentid schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "702731134813084759"
+    UserRequest:
+      description: The root schema comprises the entire JSON document.
+      default: {}
       properties:
-        last_ts:
-          type: integer
-          format: int64
-        banners:
-          type: array
-          items:
-            $ref: "#/components/schemas/EyeBannerEye"
-        expiration_ts:
-          type: integer
-          format: int64
-    EyeBannerEye:
-      type: object
-      properties:
-        banner:
-          type: integer
-          format: int64
-        cpm:
-          type: integer
-          format: int64
-    ProductVisitEventPageType:
-      type: string
-      enum:
-        - OTHER
-        - HOME
-        - SEARCHRESULTS
-        - CATEGORY
-        - PRODUCT
-        - CART
-        - PURCHASE
-        - LAL
-    ProductsVisitsVisit:
-      type: object
-      properties:
-        shop_id:
-          type: integer
-          format: int64
-        feed_id:
-          type: integer
-          format: int64
-        product_id:
+        fullname:
+          $id: "#/properties/fullname"
           type: string
-        last_visit_ts:
-          type: integer
-          format: int64
-        page_type:
-          $ref: "#/components/schemas/ProductVisitEventPageType"
-        score:
-          type: integer
-          format: int64
-    ProductsVisitsVisit2:
-      type: object
-      properties:
-        shop_id:
-          type: integer
-          format: int64
-        feed_id:
-          type: integer
-          format: int64
-        page_type:
-          $ref: "#/components/schemas/ProductVisitEventPageType"
-        products:
-          type: array
-          items:
-            $ref: "#/components/schemas/Visit2Product"
-    ProfiledBannerUserFeature:
-      type: object
-      properties:
-        name:
+          title: The fullname schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Алексей_Мамаев
+        studentid:
+          $id: "#/properties/studentid"
           type: string
-        value:
-          $ref: "#/components/schemas/profileBUFeatureValues"
-    ProfiledProfile:
-      type: object
+          title: The studentid schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "702731134813084759"
+    TaskResponse:
+      description: The root schema comprises the entire JSON document.
+      default: {}
       properties:
-        search_phrases:
-          $ref: "#/components/schemas/profileSearchPhrases"
-        products_visits:
-          $ref: "#/components/schemas/profileProductsVisits"
-        usual_locations:
-          $ref: "#/components/schemas/profileUsualLocations"
-        url_event_counters:
-          $ref: "#/components/schemas/profileUrlEventCounters"
-        last_known_locations:
-          $ref: "#/components/schemas/profileLastKnownLocations"
-        rb_odkl_apps:
-          $ref: "#/components/schemas/profileUserApplications"
-    ProfiledUserFeature:
-      type: object
-      properties:
-        name:
+        username:
+          $id: "#/properties/username"
           type: string
-        value:
-          $ref: "#/components/schemas/mlFeatureValue"
-    SearchPhrasesQuery:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        mtime:
-          type: integer
-          format: int64
-        phrase:
+          title: The taskname schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example: polinom
+        fullname:
+          $id: "#/properties/fullname"
           type: string
-          format: byte
-        encoding:
-          type: integer
-          format: int64
-        rb_source:
-          type: integer
-          format: int64
-        rule:
-          type: integer
-          format: int64
-        source:
-          type: integer
-          format: int64
-        score:
-          type: integer
-          format: int64
-    SearchPhrasesVector:
-      type: object
-      properties:
-        version:
-          type: integer
-          format: int64
-        phrases_count:
-          type: integer
-          format: int64
-        sum:
-          type: array
-          items:
-            type: integer
-            format: int32
-    UrlEventCount:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        count:
-          type: integer
-          format: int64
-    UrlEventCountersUrl:
-      type: object
-      properties:
-        url_object_type:
-          type: integer
-          format: int64
-        url_object_id:
+          title: The fullname schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Полином
+        maxtime:
+          $id: "#/properties/maxtime"
           type: string
-        shows:
-          type: integer
-          format: int64
-        clicks:
-          type: integer
-          format: int64
-        goals:
-          type: integer
-          format: int64
-        events:
-          type: array
-          items:
-            $ref: "#/components/schemas/UrlEventCount"
-        first_ts:
-          type: integer
-          format: int64
-        last_ts:
-          type: integer
-          format: int64
-    UserInterestsSourceCategory:
-      type: object
-      properties:
-        interest_id:
-          type: integer
-          format: int64
-        category_id:
-          type: integer
-          format: int64
-        count:
-          type: integer
-          format: int64
-    Visit2Product:
-      type: object
-      properties:
-        product_id:
+          title: The maxtime schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "2"
+        maxmemory:
+          $id: "#/properties/maxmemory"
           type: string
-        last_visit_ts:
-          type: integer
-          format: int64
-        score:
-          type: integer
-          format: int64
-    mlFeatureValue:
-      type: object
+          title: The maxmemory schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "256"
+    TaskRequest:
+      description: The root schema comprises the entire JSON document.
+      default: {}
       properties:
-        keys:
-          type: array
-          items:
-            type: integer
-            format: int64
-        vals:
-          type: array
-          items:
-            type: number
-            format: float
-      title: >-
-        Значение признака
-
-        Категориальные признаки: выставляется только массив keys (сортировка + дельта-кодирование)
-
-        Числовые признаки (плотное представление): выставляется только массив vals
-
-        Числовые признаки (разреженное представление): выставляются оба массива, должны иметь одинаковый
-                                                       размер, keys отсортирован и дельта кодирован
-    profileBUFeatureLinkType:
-      type: string
-      enum:
-        - Unknown
-        - BannerId
-        - DummyStrLink
-      default: Unknown
-      title: Типы связи баннер-пользователь
-    profileBUFeatureValues:
-      type: object
-      properties:
-        link_type:
-          $ref: "#/components/schemas/profileBUFeatureLinkType"
-        string_keys:
-          type: array
-          items:
-            type: string
-        uint32_keys:
-          type: array
-          items:
-            type: integer
-            format: int64
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/mlFeatureValue"
-      description: >-
-        Значения признака для каждого ключа связи с баннером
-
-        Для каждого конкретного значения типа связи заполняются либо строковые ключи, либо uint32-ключи
-
-        Если тип ключей для данного типа связи выбран неверно, но они просто будут игнорироваться
-
-        Количество ключей должно совпадать с количеством значений.
-    profileBannerdUserSettings:
-      type: object
-      properties:
-        debug:
-          $ref: "#/components/schemas/BannerdUserSettingsDebug"
-        eye:
-          $ref: "#/components/schemas/BannerdUserSettingsEye"
-    profileLastKnownLocations:
-      type: object
-      properties:
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/profileLocationMsg"
-    profileLocationMsg:
-      type: object
-      properties:
-        lat:
-          type: number
-          format: double
-        lon:
-          type: number
-          format: double
-        location_provider:
-          type: integer
-          format: int64
-        mtime:
-          type: integer
-          format: int64
-    profileProductsVisits:
-      type: object
-      properties:
-        visits:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProductsVisitsVisit"
-        visits2:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProductsVisitsVisit2"
-    profileProfiled:
-      type: object
-      properties:
-        usual:
-          $ref: "#/components/schemas/ProfiledProfile"
-        cross:
-          $ref: "#/components/schemas/ProfiledProfile"
-        bannerd_user_settings:
-          $ref: "#/components/schemas/profileBannerdUserSettings"
-        user_interests_source:
-          $ref: "#/components/schemas/profileUserInterestsSource"
-        user_features:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProfiledUserFeature"
-        banner_user_features:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProfiledBannerUserFeature"
-    profileSearchPhrases:
-      type: object
-      properties:
-        query_auto_increment:
-          type: integer
-          format: int64
-        query:
-          type: array
-          items:
-            $ref: "#/components/schemas/SearchPhrasesQuery"
-        vector:
-          $ref: "#/components/schemas/SearchPhrasesVector"
-    profileUrlEventCounters:
-      type: object
-      properties:
-        urls:
-          type: array
-          items:
-            $ref: "#/components/schemas/UrlEventCountersUrl"
-    profileUserApplicationRecord:
-      type: object
-      properties:
-        application_id:
+        fullname:
+          $id: "#/properties/fullname"
           type: string
-          format: int64
-        first_access_ts:
-          type: integer
-          format: int32
-          title: fields 2-4 are reserved
-        last_access_ts:
-          type: integer
-          format: int32
-    profileUserApplications:
+          title: The fullname schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Полином
+        maxtime:
+          $id: "#/properties/maxtime"
+          type: string
+          title: The maxtime schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "2"
+        maxmemory:
+          $id: "#/properties/maxmemory"
+          type: string
+          title: The maxmemory schema
+          description: An explanation about the purpose of this instance.
+          example:
+            "256"
+    ResultResponse:
+      $schema: http://json-schema.org/draft-07/schema
+      $id: http://example.com/example.json
+      type: array
+      title: The root schema
+      description: The root schema comprises the entire JSON document.
+      default: []
+      items:
+        anyOf:
+          - $id: "#/items/anyOf/0"
+            type: object
+            title: The first anyOf schema
+            description: An explanation about the purpose of this instance.
+            default: {}
+            required:
+              - user
+              - task
+              - uploadDate
+              - sourceCode
+              - status
+              - copiedFrom
+            properties:
+              user:
+                $id: "#/items/anyOf/0/properties/user"
+                type: string
+                title: The user schema
+                description: An explanation about the purpose of this instance.
+                default: ""
+                example: Алексей_Мамаев
+              task:
+                $id: "#/items/anyOf/0/properties/task"
+                type: string
+                title: The task schema
+                description: An explanation about the purpose of this instance.
+                default: ""
+                example: frame
+              uploadDate:
+                $id: "#/items/anyOf/0/properties/uploadDate"
+                type: string
+                title: The uploadDate schema
+                description: An explanation about the purpose of this instance.
+                default: ""
+                example: "2020-06-21T23:17:57.60531+03:00"
+              sourceCode:
+                $id: "#/items/anyOf/0/properties/sourceCode"
+                type: string
+                title: The sourceCode schema
+                description: An explanation about the purpose of this instance.
+                default: ""
+                example: "int main(int argc, char **argv) { "
+              copiedFrom:
+                type: array
+                items:
+                  anyOf:
+                    - $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/0"
+                      type: object
+                      title: The first anyOf schema
+                      description: An explanation about the purpose of this instance.
+                      default: {}
+                      required:
+                        - user
+                        - task
+                        - uploadDate
+                        - percent
+                        - sourceCode
+                      properties:
+                        user:
+                          $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/\
+                                  0/properties/user"
+                          type: string
+                          title: The user schema
+                          description: An explanation about the purpose of this instance.
+                          default: ""
+                          example: Даниил_Гавриловский
+                        task:
+                          $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/\
+                                  0/properties/task"
+                          type: string
+                          title: The task schema
+                          description: An explanation about the purpose of this instance.
+                          default: ""
+                          example: frame
+                        uploadDate:
+                          $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/\
+                                  0/properties/uploadDate"
+                          type: string
+                          title: The uploadDate schema
+                          description: An explanation about the purpose of this instance.
+                          default: ""
+                          example: "2020-06-21T23:17:57.290795+03:00"
+                        percent:
+                          $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/\
+                                  0/properties/percent"
+                          type: integer
+                          title: The percent schema
+                          description: An explanation about the purpose of this instance.
+                          default: 0
+                          example: 5
+                        sourceCode:
+                          $id: "#/items/anyOf/0/properties/copiedFrom/items/anyOf/\
+                                  0/properties/sourceCode"
+                          type: string
+                          title: The sourceCode schema
+                          description: An explanation about the purpose of this instance.
+                          default: ""
+                          example: "int main(int argc, char **argv) { "
+                  $id: "#/items/anyOf/0/properties/copiedFrom/items"
+        $id: "#/items"
+    AttemptResponse:
+      $schema: http://json-schema.org/draft-07/schema
+      $id: http://example.com/example.json
       type: object
+      title: The root schema
+      description: The root schema comprises the entire JSON document.
+      default: {}
+      examples:
+        - user: Алексей_Мамаев
+          task: dfs
+          time: 1
+          memory: 5
+          sourceCode: int main(char argv) { int h = atoi(argv[1]); }
+          uploadDate: 2020-07-01T21:30:26.623196+03:00
+      required:
+        - user
+        - task
+        - time
+        - memory
+        - sourceCode
+        - uploadDate
       properties:
-        applications:
-          type: array
-          items:
-            $ref: "#/components/schemas/profileUserApplicationRecord"
-    profileUserInterestsSource:
+        user:
+          $id: "#/properties/user"
+          type: string
+          title: The user schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Алексей_Мамаев
+        task:
+          $id: "#/properties/task"
+          type: string
+          title: The task schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            dfs
+        time:
+          $id: "#/properties/time"
+          type: integer
+          title: The time schema
+          description: An explanation about the purpose of this instance.
+          default: 0
+          example: 1
+        memory:
+          $id: "#/properties/memory"
+          type: integer
+          title: The memory schema
+          description: An explanation about the purpose of this instance.
+          default: 0
+          example: 5
+        sourceCode:
+          $id: "#/properties/sourceCode"
+          type: string
+          title: The sourceCode schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example: "int main(char argv) { int h = atoi(argv[1]); }"
+        uploadDate:
+          $id: "#/properties/uploadDate"
+          type: string
+          title: The uploadDate schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example: "2020-07-01T21:30:26.623196+03:00"
+    AttemptRequest:
+      $schema: http://json-schema.org/draft-07/schema
+      $id: http://example.com/example.json
       type: object
+      title: The root schema
+      description: The root schema comprises the entire JSON document.
+      default: {}
+      examples:
+        - user: Алексей_Мамаев
+          task: dfs
+          time: 1
+          memory: 5
+          sourceCode: int main(char argv) { int h = atoi(argv[1]); }
+          uploadDate: 2020-07-01T21:30:26.623196+03:00
+      required:
+        - user
+        - task
+        - time
+        - memory
+        - sourceCode
+        - uploadDate
       properties:
-        categories:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserInterestsSourceCategory"
-    profileUsualLocations:
-      type: object
-      properties:
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/profileUsualLocationsLocation"
-    profileUsualLocationsLocation:
-      type: object
-      properties:
-        latitude:
-          type: number
-          format: float
-        longitude:
-          type: number
-          format: float
-        radius:
+        user:
+          $id: "#/properties/user"
+          type: string
+          title: The user schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            Алексей_Мамаев
+        task:
+          $id: "#/properties/task"
+          type: string
+          title: The task schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example:
+            dfs
+        time:
+          $id: "#/properties/time"
           type: integer
-          format: int64
-        type:
+          title: The time schema
+          description: An explanation about the purpose of this instance.
+          default: 0
+          example: 1
+        memory:
+          $id: "#/properties/memory"
           type: integer
-          format: int64
-        mtime:
-          type: integer
-          format: int64
-        provider:
-          type: integer
-          format: int64
+          title: The memory schema
+          description: An explanation about the purpose of this instance.
+          default: 0
+          example: 5
+        sourceCode:
+          $id: "#/properties/sourceCode"
+          type: string
+          title: The sourceCode schema
+          description: An explanation about the purpose of this instance.
+          default: ""
+          example: "int main(char argv) { int h = atoi(argv[1]); }"
 
 paths:
-  /profile/v1.json:
+  /user/{username}:
     get:
-      summary: get profile
+      summary: get user info
+      tags:
+        - user
       parameters:
-        - in: query
-          name: user_ids
+        - in: path
+          name: username
+          required: true
           schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: user ids for main profile with prefix
+            type: string
+          description: user name to be gotten
           style: form
           explode: false
           allowReserved: true
-        - in: query
-          name: all_user_ids
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: user ids for cross-device profile with prefix
-          style: form
-          explode: false
-          allowReserved: true
-        - $ref: '#/components/headers/x-bannerd-timeout'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/profileProfiled'
-  /profile/v1.proto:
-    get:
-      summary: get profile
+                $ref: '#/components/schemas/UserResponse'
+    post:
+      summary: add user
+      tags:
+        - user
       parameters:
-        - in: query
-          name: user_ids
+        - in: path
+          name: username
+          required: true
           schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: user ids for main profile with prefix
+            type: string
+          description: user name to be gotten
           style: form
           explode: false
           allowReserved: true
-        - in: query
-          name: all_user_ids
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: user ids for cross-device profile with prefix
-          style: form
-          explode: false
-          allowReserved: true
-        - $ref: '#/components/headers/x-bannerd-timeout'
+      requestBody:
+        description: Full name and student ID of user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
-                example: ""
-  /api/tarantool.json:
+                $ref: '#/components/schemas/UserResponse'
+
+  /task/{taskname}:
     get:
-      summary: get full profile data
+      summary: get task info
+      tags:
+        - task
       parameters:
-        - in: query
-          name: vk_id
+        - in: path
+          name: taskname
+          required: true
           schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: vk.com ids without prefix
+            type: string
+          description: task name to be gotten
           style: form
           explode: false
-        - in: query
-          name: ok_id
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: ok.ru ids without prefix
-          style: form
-          explode: false
-        - in: query
-          name: vid
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: vid ids without prefix
-          style: form
-          explode: false
-        - in: query
-          name: email
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: email without prefix
-          style: form
-          explode: false
-        - in: query
-          name: device_id
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: device ids with prefix
-          style: form
-          explode: false
-        - in: query
-          name: tel
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: phone numbers without prefix
-          style: form
-          explode: false
-        - $ref: '#/components/headers/x-bannerd-timeout'
+          allowReserved: true
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/tarantoolResponse'
+                $ref: '#/components/schemas/TaskResponse'
+    post:
+      summary: add task
+      tags:
+        - task
+      parameters:
+        - in: path
+          name: taskname
+          required: true
+          schema:
+            type: string
+          style: form
+          explode: false
+          allowReserved: true
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /attempt:
+    get:
+      summary: get attempt info
+      tags:
+        - attempt
+      parameters:
+        - in: query
+          name: user
+          schema:
+            type: string
+          required: false
+          description: user name
+          style: form
+          explode: false
+        - in: query
+          name: task
+          schema:
+            type: string
+          required: false
+          description: task name
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+    post:
+      summary: add attempt
+      tags:
+        - attempt
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttemptRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+
+  /result:
+    get:
+      summary: get results by user, task
+      tags:
+        - result
+      parameters:
+        - in: query
+          name: user
+          schema:
+            type: string
+          required: false
+          description: user name
+          style: form
+          explode: false
+        - in: query
+          name: task
+          schema:
+            type: string
+          required: false
+          description: task name
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultResponse'

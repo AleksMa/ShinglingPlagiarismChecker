@@ -1,6 +1,6 @@
 package models
 
-const BorrowingThreshold int8 = 0
+const BorrowingThreshold int8 = 20
 
 type Borrowing struct {
 	AttemptID  uint64

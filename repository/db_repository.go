@@ -3,10 +3,14 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/AleksMa/StealLovingYou/models"
+	"net/http"
+	"strconv"
+
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"net/http"
+	"github.com/lib/pq"
+
+	"github.com/AleksMa/StealLovingYou/models"
 )
 
 type Repo interface {
@@ -26,9 +30,13 @@ type Repo interface {
 
 	GetResult(task string, user string) ([]*models.Result, *models.Error)
 
-	PutHashes(ID uint64, hashSet models.HashSet) *models.Error
-	GetHashes(ID uint64) (*models.HashSet, *models.Error)
-	GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error)
+	//PutHashes(ID uint64, hashSet models.HashSet) *models.Error
+	//GetHashes(ID uint64) (*models.HashSet, *models.Error)
+	//GetSimilarHashes(attempt *models.Attempt) ([]*models.HashObject, *models.Error)
+
+	PutHashes2(ID uint64, hashSet models.HashSet) *models.Error
+	GetHashes2(ID uint64) (*models.HashSet, *models.Error)
+	GetSimilarHashes2(attempt *models.Attempt) ([]*models.HashObject, *models.Error)
 
 	PutBorrowing(borrowing *models.Borrowing) *models.Error
 }
@@ -83,7 +91,6 @@ func (store *DBStore) PutUser(user *models.User) (uint64, *models.Error) {
 	if err != nil {
 		return 0, models.NewError(http.StatusInternalServerError, err.Error())
 	}
-
 
 	insertQuery := `INSERT INTO users (userName, fullName, studentID) VALUES ($1, $2, $3) RETURNING id`
 	rows := tx.QueryRow(store.ctx, insertQuery,
@@ -216,12 +223,12 @@ func (store *DBStore) PutAttempt(attempt *models.Attempt) (uint64, *models.Error
 	fmt.Println(attempt)
 	var ID uint64
 
-	insertQuery := `INSERT INTO attempts (userID, taskID, memory, time, sourceCode, uploadDate) VALUES 
+	insertQuery := `INSERT INTO attempts (userID, taskID, memory, time, sourceCode, uploadDate, status) VALUES 
 						((SELECT ID FROM users WHERE userName = $1),
 						(SELECT ID FROM tasks WHERE taskName = $2), 
-						$3, $4, $5, $6) RETURNING ID`
+						$3, $4, $5, $6, $7) RETURNING ID`
 	rows := store.DB.QueryRow(store.ctx, insertQuery,
-		attempt.User, attempt.Task, attempt.Memory, attempt.Time, attempt.SourceCode, attempt.UploadDate)
+		attempt.User, attempt.Task, attempt.Memory, attempt.Time, attempt.SourceCode, attempt.UploadDate, 1)
 
 	fmt.Println(attempt.UploadDate)
 
@@ -230,10 +237,6 @@ func (store *DBStore) PutAttempt(attempt *models.Attempt) (uint64, *models.Error
 		fmt.Println(err)
 		return 0, models.NewError(http.StatusInternalServerError, err.Error())
 	}
-
-	insertQuery = `INSERT INTO status (attemptID, status) VALUES
-						($1, $2)`
-	store.DB.QueryRow(store.ctx, insertQuery, ID, 1)
 
 	return ID, nil
 }
@@ -289,10 +292,10 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 
 	selectStr := `SELECT id, userName, taskName, uploadDate, status, percent, 
 						 copiedFrom, copiedTask, copiedDate, sourceCode, copiedCode
-					FROM results`
+					FROM results WHERE status=3`
 
 	if task != "" {
-		selectStr += " WHERE taskname=$1"
+		selectStr += " AND taskname=$1"
 		args = append(args, task)
 	}
 
@@ -300,11 +303,13 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 		if task != "" {
 			selectStr += " AND username=$2"
 		} else {
-			selectStr += " WHERE username=$1"
+			selectStr += " AND username=$1"
 		}
 		args = append(args, user)
 	}
-	selectStr += "AND percent > 2;"
+	selectStr += " AND percent > " + strconv.Itoa(int(models.BorrowingThreshold)) + " ;"
+
+	fmt.Println(selectStr)
 
 	rows, err := store.DB.Query(store.ctx, selectStr, args...)
 	if err != nil {
@@ -331,9 +336,6 @@ func (store *DBStore) GetResult(task string, user string) ([]*models.Result, *mo
 
 func (store *DBStore) PutHashes(ID uint64, hashSet models.HashSet) *models.Error {
 	var gID uint64
-
-
-
 	for hash := range hashSet {
 		insertQuery := `INSERT INTO hashes (attemptID, Hash) VALUES ($1, $2) RETURNING attemptID`
 		rows := store.DB.QueryRow(store.ctx, insertQuery,
@@ -346,7 +348,7 @@ func (store *DBStore) PutHashes(ID uint64, hashSet models.HashSet) *models.Error
 		}
 	}
 
-	updateQuery := `UPDATE status SET status=$1 WHERE attemptID=$2`
+	updateQuery := `UPDATE attempts SET status=$1 WHERE ID=$2`
 	_, err := store.DB.Exec(store.ctx, updateQuery,
 		3, ID)
 
@@ -379,7 +381,6 @@ func (store *DBStore) GetHashes(ID uint64) (*models.HashSet, *models.Error) {
 		result[hash] = struct{}{}
 	}
 
-
 	return &result, nil
 }
 
@@ -408,6 +409,98 @@ func (store *DBStore) GetSimilarHashes(attempt *models.Attempt) ([]*models.HashO
 		}
 		hs, e := store.GetHashes(attemptID)
 		if e != nil {
+			return results, models.NewError(http.StatusInternalServerError, e.Error())
+		}
+		result := &models.HashObject{
+			ID:  attemptID,
+			Set: hs,
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+func (store *DBStore) PutHashes2(ID uint64, hashSet models.HashSet) *models.Error {
+	var gID uint64
+	var hashes []models.Hash
+
+	for k := range hashSet {
+		hashes = append(hashes, k)
+	}
+
+	insertQuery := `INSERT INTO hashes2 (attemptID, Hash) VALUES ($1, $2) RETURNING attemptID`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		ID, pq.Array(hashes))
+
+	err := rows.Scan(&gID)
+	if err != nil || ID != gID {
+		fmt.Println(err)
+		return models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	updateQuery := `UPDATE attempts SET status=$1 WHERE ID=$2`
+	_, err = store.DB.Exec(store.ctx, updateQuery,
+		3, ID)
+
+	if err != nil {
+		return models.NewError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
+}
+
+func (store *DBStore) GetHashes2(ID uint64) (*models.HashSet, *models.Error) {
+
+	result := make(models.HashSet)
+
+	selectStr := `SELECT hash FROM hashes2
+						WHERE attemptID=$1;`
+	var hashes []int64
+
+	row := store.DB.QueryRow(store.ctx, selectStr, ID)
+
+	err := row.Scan(pq.Array(&hashes))
+
+	if err != nil {
+		return &result, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for _, hash := range hashes {
+		result[models.Hash(hash)] = struct{}{}
+	}
+
+	return &result, nil
+}
+
+func (store *DBStore) GetSimilarHashes2(attempt *models.Attempt) ([]*models.HashObject, *models.Error) {
+	var results []*models.HashObject
+
+	selectStr := `SELECT a.ID FROM attempts a
+						JOIN tasks t on a.taskID = t.ID
+						JOIN users u on a.userID = u.ID
+						WHERE t.taskName=$1 AND u.userName!=$2;`
+
+	rows, err := store.DB.Query(store.ctx, selectStr, attempt.Task, attempt.User)
+
+	defer rows.Close()
+	if err != nil {
+		fmt.Println(err)
+		return results, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	for rows.Next() {
+		var attemptID uint64
+		err := rows.Scan(&attemptID)
+		if err != nil {
+			fmt.Println("222")
+			return results, models.NewError(http.StatusInternalServerError, err.Error())
+		}
+		if attemptID == attempt.ID {
+			continue
+		}
+		hs, e := store.GetHashes2(attemptID)
+		if e != nil {
+			fmt.Println("111")
 			return results, models.NewError(http.StatusInternalServerError, e.Error())
 		}
 		result := &models.HashObject{
