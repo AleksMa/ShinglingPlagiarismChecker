@@ -71,18 +71,18 @@ components:
             Полином
         maxtime:
           $id: "#/properties/maxtime"
-          type: string
+          type: integer
           title: The maxtime schema
           description: An explanation about the purpose of this instance.
           example:
-            "2"
+            2
         maxmemory:
           $id: "#/properties/maxmemory"
-          type: string
+          type: integer
           title: The maxmemory schema
           description: An explanation about the purpose of this instance.
           example:
-            "256"
+            256
     TaskRequest:
       description: The root schema comprises the entire JSON document.
       default: {}
@@ -97,18 +97,18 @@ components:
             Полином
         maxtime:
           $id: "#/properties/maxtime"
-          type: string
+          type: integer
           title: The maxtime schema
           description: An explanation about the purpose of this instance.
           example:
-            "2"
+            2
         maxmemory:
           $id: "#/properties/maxmemory"
-          type: string
+          type: integer
           title: The maxmemory schema
           description: An explanation about the purpose of this instance.
           example:
-            "256"
+            256
     ResultResponse:
       $schema: http://json-schema.org/draft-07/schema
       $id: http://example.com/example.json
@@ -389,6 +389,55 @@ paths:
               $ref: '#/components/schemas/UserRequest'
       responses:
         '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      summary: update user
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+          description: user name of changing user
+          style: form
+          explode: false
+          allowReserved: true
+      requestBody:
+        description: New full name and student ID of user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    delete:
+      summary: delete user
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+          description: user name to be deleted
+          style: form
+          explode: false
+          allowReserved: true
+      responses:
+        '200':
           description: OK
           content:
             application/json:
@@ -439,6 +488,54 @@ paths:
               $ref: '#/components/schemas/TaskRequest'
       responses:
         '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+    put:
+      summary: update task
+      tags:
+        - task
+      parameters:
+        - in: path
+          name: taskname
+          required: true
+          schema:
+            type: string
+          style: form
+          explode: false
+          allowReserved: true
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+    delete:
+      summary: delete task
+      tags:
+        - task
+      parameters:
+        - in: path
+          name: taskname
+          required: true
+          schema:
+            type: string
+          description: task name to be deleted
+          style: form
+          explode: false
+          allowReserved: true
+      responses:
+        '200':
           description: OK
           content:
             application/json:

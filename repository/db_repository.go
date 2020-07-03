@@ -17,10 +17,14 @@ type Repo interface {
 	PutUser(user *models.User) (uint64, *models.Error)
 	GetUsers(user *models.User) ([]*models.User, *models.Error)
 	GetUserByUsername(nickname string) (models.User, *models.Error)
+	UpdateUser(user *models.User) (uint64, *models.Error)
+	DeleteUserByUsername(nickname string) (models.User, *models.Error)
 
 	PutTask(task *models.Task) (uint64, *models.Error)
 	GetTasks(task *models.Task) ([]*models.Task, *models.Error)
 	GetTaskByTaskname(taskname string) (models.Task, *models.Error)
+	UpdateTask(task *models.Task) (uint64, *models.Error)
+	DeleteTaskByTaskname(taskname string) (models.Task, *models.Error)
 
 	PutAttempt(attempt *models.Attempt) (uint64, *models.Error)
 	GetAttempt(task string, user string) ([]*models.Attempt, *models.Error)
@@ -59,15 +63,6 @@ func (store *DBStore) GetStatus() (models.Status, *models.Error) {
 
 	status := &models.Status{}
 
-	//row := tx.QueryRow(store.ctx, `SELECT count(*) FROM forums`)
-	//row.Scan(&status.Forum)
-	//
-	//row = tx.QueryRow(store.ctx, `SELECT count(*) FROM posts`)
-	//row.Scan(&status.Post)
-	//
-	//row = tx.QueryRow(store.ctx, `SELECT count(*) FROM threads`)
-	//row.Scan(&status.Thread)
-
 	row := tx.QueryRow(store.ctx, `SELECT count(*) FROM users`)
 	row.Scan(&status.User)
 
@@ -95,6 +90,28 @@ func (store *DBStore) PutUser(user *models.User) (uint64, *models.Error) {
 	insertQuery := `INSERT INTO users (userName, fullName, studentID) VALUES ($1, $2, $3) RETURNING id`
 	rows := tx.QueryRow(store.ctx, insertQuery,
 		user.UserName, user.FullName, user.StudentID)
+
+	err = rows.Scan(&ID)
+	if err != nil {
+		tx.Rollback(store.ctx)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	tx.Commit(store.ctx)
+	return ID, nil
+}
+
+func (store *DBStore) UpdateUser(user *models.User) (uint64, *models.Error) {
+	var ID uint64
+
+	tx, err := store.DB.Begin(store.ctx)
+	if err != nil {
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	insertQuery := `UPDATE users SET FullName = $1, StudentID = $2 WHERE username = $3 RETURNING id`
+	rows := tx.QueryRow(store.ctx, insertQuery,
+		user.FullName, user.StudentID, user.UserName)
 
 	err = rows.Scan(&ID)
 	if err != nil {
@@ -146,6 +163,25 @@ func (store *DBStore) GetUserByUsername(nickname string) (models.User, *models.E
 	if err != nil {
 		fmt.Println(err)
 		if err == pgx.ErrNoRows {
+			return *user, models.NewError(http.StatusNotFound, err.Error())
+		}
+		return *user, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return *user, nil
+}
+
+func (store *DBStore) DeleteUserByUsername(nickname string) (models.User, *models.Error) {
+	user := &models.User{}
+
+	selectStr := "DELETE FROM users WHERE username = $1 RETURNING ID, UserName, FullName, StudentID"
+	row := store.DB.QueryRow(store.ctx, selectStr, nickname)
+
+	err := row.Scan(&user.ID, &user.UserName, &user.FullName, &user.StudentID)
+
+	if err != nil {
+		fmt.Println(err)
+		if err == pgx.ErrNoRows || user.ID == 0 {
 			return *user, models.NewError(http.StatusNotFound, err.Error())
 		}
 		return *user, models.NewError(http.StatusInternalServerError, err.Error())
@@ -211,6 +247,43 @@ func (store *DBStore) GetTaskByTaskname(taskname string) (models.Task, *models.E
 	if err != nil {
 		fmt.Println(err)
 		if err == pgx.ErrNoRows {
+			return *task, models.NewError(http.StatusNotFound, err.Error())
+		}
+		return *task, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return *task, nil
+}
+
+func (store *DBStore) UpdateTask(task *models.Task) (uint64, *models.Error) {
+	fmt.Println(task)
+	var ID uint64
+
+	insertQuery := `UPDATE tasks SET FullName = $1, maxTime = $2, maxMemory = $3 WHERE taskname = $4 RETURNING id`
+	rows := store.DB.QueryRow(store.ctx, insertQuery,
+		task.FullName, task.MaxTime, task.MaxMemory,
+		task.TaskName)
+
+	err := rows.Scan(&ID)
+	if err != nil {
+		fmt.Println(err)
+		return 0, models.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ID, nil
+}
+
+func (store *DBStore) DeleteTaskByTaskname(taskname string) (models.Task, *models.Error) {
+	task := &models.Task{}
+
+	selectStr := "DELETE FROM tasks WHERE taskname = $1 RETURNING ID, TaskName, FullName, MaxTime, MaxMemory"
+	row := store.DB.QueryRow(store.ctx, selectStr, taskname)
+
+	err := row.Scan(&task.ID, &task.TaskName, &task.FullName, &task.MaxTime, &task.MaxMemory)
+
+	if err != nil {
+		fmt.Println(err)
+		if err == pgx.ErrNoRows || task.ID == 0 {
 			return *task, models.NewError(http.StatusNotFound, err.Error())
 		}
 		return *task, models.NewError(http.StatusInternalServerError, err.Error())

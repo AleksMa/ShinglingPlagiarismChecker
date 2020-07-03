@@ -70,10 +70,14 @@ func main() {
 
 	r.HandleFunc("/user/{username}", api.CreateUser).Methods("POST")
 	r.HandleFunc("/user/{username}", api.GetUser).Methods("GET")
+	r.HandleFunc("/user/{username}", api.UpdateUser).Methods("PUT")
+	r.HandleFunc("/user/{username}", api.DeleteUser).Methods("DELETE")
 	//r.HandleFunc("/user/{nickname}/profile", api.UpdateUser).Methods("POST")
 
 	r.HandleFunc("/task/{taskname}", api.CreateTask).Methods("POST")
 	r.HandleFunc("/task/{taskname}", api.GetTask).Methods("GET")
+	r.HandleFunc("/task/{taskname}", api.UpdateTask).Methods("PUT")
+	r.HandleFunc("/task/{taskname}", api.DeleteTask).Methods("DELETE")
 
 	r.HandleFunc("/attempt", api.CreateAttempt).Methods("POST")
 	r.HandleFunc("/attempt", api.GetAttempt).Methods("GET")
